@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "usd-convert-cad"
+version = "0.1.0"
+description = "Headless Omniverse Kit CAD to USD conversion using explicit JT, DGN, and HOOPS converter cores."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "omniverse-kit",
+]
+
+[project.scripts]
+usd-convert-cad = "usd_convert_cad.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/usd_convert_cad"]

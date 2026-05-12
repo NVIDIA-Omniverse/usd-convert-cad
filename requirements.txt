@@ -1,0 +1,4 @@
+# Requires Python 3.12 on Windows.
+# Install with:
+#   python -m pip install -r requirements.txt --extra-index-url https://pypi.nvidia.com
+omniverse-kit

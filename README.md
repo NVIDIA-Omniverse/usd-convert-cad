@@ -1,154 +1,138 @@
-# __NVIDIA_OSS__ Standard Repo Template
+# usd-convert-cad
 
-This README file is from the NVIDIA_OSS standard repo template of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file). It provides a list of files in the PLC-OSS-Template and guidelines on how to use (clone and customize) them.
+Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and CAD converter core extensions pulled from the Kit registry.
 
-**Upon completing the customization for the project repo, the repo admin should replace this README template with the project specific README file.**
+This repository is a small reference app for routing CAD files to explicit Kit converter cores:
 
-- Files (org-wide templates in the NVIDIA .github org repo; per-repo overrides allowed) in [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
+- `omni.kit.converter.jt_core` for JT files.
+- `omni.kit.converter.dgn_core` for DGN files.
+- `omni.kit.converter.hoops_core` for general CAD and neutral CAD formats.
 
-   - Root 
-     - README.md skeleton (CTA + Quickstart + Support/Security/Governance links) 
-     - LICENSE (Apache 2.0 by default)
-        - For other licenses, see the [Confluence page](https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816) for other licenses
-        - CLA.md file (delete if not using MIT or BSD licenses)
-     - CODE_OF_CONDUCT.md 
-     - SECURITY.md (vuln reporting path) 
-     - CONTRIBUTING.md (base; repo can add specifics)
-     - SUPPORT.md (Support levels/channels)
-     - GOVERNANCE.md (baseline; repo may extend)
-     - CITATION.md (for projects that need citation)
+The goal is to keep the routing policy visible in code and in `SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
 
-   - .github/ 
-     - ISSUE_TEMPLATE/ (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository>)
-       - bug.yml, feature.yml, task.yml, config.yml 
-     - PULL_REQUEST_TEMPLATE.md (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository>)
-     - workflows/
-     - Note: workflow-templates/ for starter workflows should live in the org-level .github repo, not per-repo
+## Role In Physical AI Workflows
 
-   - Repo-specific (not org-template, maintained by the team)
-     - CODEOWNERS (place at .github/CODEOWNERS or repo root)
-     - CHANGELOG.md (or RELEASE.md) 
-     - ROADMAP.md 
-     - MAINTAINERS.md 
-     - NOTICE or THIRD_PARTY_NOTICES / THIRD_PARTY_LICENSES (dependency specific)
-     - Build/package files (CMake, pyproject, Dockerfile, etc.)
+`usd-convert-cad` is intended to be its own repository and conversion backend. Higher-level agent workflow repositories, such as `physical-ai-skill-hub-dev`, should not reimplement Kit startup or CAD converter calls. They should locate this checkout, call its CLI, consume its report, and then continue with validation, material assignment, physics authoring, or SimReady conformance.
 
-   - Recommended structure and hygiene
-     - docs/
-     - examples/
-     - tests/
-     - scripts/
-     - Container/dev env: Dockerfile, docker/, .devcontainer/ (optional)
-     - Build/package (language-specific):
-       - Python: pyproject.toml, setup.cfg/setup.py, requirements.txt, environment.yml
-       - C++: CMakeLists.txt, cmake/, vcpkg.json
-     - Repo hygiene: .gitignore, .gitattributes, .editorconfig, .pre-commit-config.yaml, .clang-format
+Recommended integration contract:
 
-
-## Usage of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file) for NEW NVIDIA OSS repos
-
-1. Clone the [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
-2. Find/replace all in the clone of `___PROJECT___` and `__PROJECT_NAME__` with the name of the specific project.
-3. Inspect all files to make sure all replacements work and update text as needed
-
-
-**What you can reuse immediately**
-- CODE_OF_CONDUCT.md
-- SECURITY.md
-- CONTRIBUTING.md (base)
-- .github/ISSUE_TEMPLATE/.yml (bug/feature/task + config.yml)
-- .github/PULL_REQUEST_TEMPLATE.md
-- Reusable workflows 
-
-**What you must customize per repo**
-- README.md: copy the skeleton and fill in product-specific details (Quickstart, Requirements, Usage, Support level, links)
-- LICENSE: check file is correct, update year, consult Confluence for alternatives https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816, add CLA.md only if your license/process requires it
-- CODEOWNERS: replace <TEAM> with your GitHub team handle(s). Place at .github/CODEOWNERS (or repo root)
-- MAINTAINERS.md: list maintainers names/roles, escalation path
-- CHANGELOG.md (or RELEASE.md): track releases/changes
-- SUPPORT.md: Update for your project
-- ROADMAP.md (optional): upcoming milestones
-- NOTICE / THIRD_PARTY_NOTICES (if you ship third‑party content)
-- Build/package files (CMake/pyproject/Dockerfile/etc.), tests/, docs/, examples/, scripts/ as appropriate
-- Workflows: Edit if you need custom behavior 
-
-
-4. Change git origin to point to new repo and push
-5. Remove the line break below and everything above it
-
-## Usage for existing NVIDIA OSS repos
-
-1. Follow the steps above, but add the files to your existing repo and merge
-
-<!-- REMOVE THE LINE BELOW AND EVERYTHING ABOVE -->
------------------------------------------
-# [Project Title]
-One-sentence value proposition for users. Who is it for, and why it matters. 
-
-# Overview
-What the project does? Why the project is useful?
-Provide a brief overview, highlighting key features or problem-solving capabilities.
-
-# Getting Started
-Guide users on how they can get started with the project. This should include basic installation step, quick-start examples 
-```bash
-# Option A: Package manager (pip/conda/npm/etc.)
-<copy-paste install>
-
-# Option B: Container
-docker run <image> <args>
-
-# Verify (hello world)
-<one-liner or ~10-line example>
+```bat
+set USD_CONVERT_CAD_ROOT=C:\Github\usd-convert-cad
+%USD_CONVERT_CAD_ROOT%\convert.bat "C:\path\to\model.jt" "C:\output\model.usd" --backend auto --report "C:\output\_conversion\cad-conversion-status.json"
 ```
-# Requirements
-Include a list of pre-requisites. 
-- OS/Arch: <summary or link to full matrix>
-- Runtime/Compiler: <versions>
-- GPU/Drivers (if applicable): CUDA <ver>, driver <ver>, etc.
 
-# Usage
-```bash
-# Minimal runnable snippet (≤20 lines)
-<code>
+The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, selected backend, converter module, converter options, warnings, errors, and pass/fail status.
+
+If `--report` is omitted, the CLI writes a timestamped report under the output folder:
+
+```text
+<output_dir>/_conversion/<output_stem>-<conversion_id>.json
 ```
-- More examples/tutorials: <link>
-- API reference: <link>
 
-# Performance (Optional)
-Summary of benchmarks; link to detailed results and hardware used.
+For automated callers, prefer passing an explicit `--report` path under `_conversion` so the caller already knows where to read the result. The timestamped default is useful for ad hoc runs and preserving conversion history.
 
-## Releases & Roadmap 
-- Releases/Changelog: <link>
-- (Optional) Next milestones or link to `ROADMAP.md`.
-  
-# Contribution Guidelines
-- Start here: `CONTRIBUTING.md`
-- Code of Conduct: `CODE_OF_CONDUCT.md`
-- Development quickstart (build/test):
-```bash
-<clone> && <deps> && <build/test>
+## Requirements
+
+- Windows.
+- Python 3.12.
+- `omniverse-kit` installed from `https://pypi.nvidia.com`.
+- Network access to the Kit extension registry on first run.
+- NVIDIA CAD Converter licensing where required by the selected converter and file format.
+
+For non-interactive runs, set:
+
+```bat
+set OMNI_KIT_ACCEPT_EULA=yes
 ```
-## Governance & Maintainers
-- Governance: `GOVERNANCE.md`
-- Maintainers: <team/handles>
-- Labeling/triage policy: <link>
 
-## Security
-- Vulnerability disclosure: `SECURITY.md`
-- Do not file public issues for security reports.
+## Quick Start
 
-## Support
-- Level: <Experimental | Maintained | Stable>
-- How to get help: Issues/Discussions/<channel link>
-- Response expectations (if any).
+```bat
+install.bat
+validate.bat
+convert.bat "C:\path\to\part.jt" "C:\path\to\out\part.usd"
+```
 
-# Community
-Provide the channel for community communications.
+This writes the converted USD and a status report under `C:\path\to\out\_conversion\`.
 
-# References
-Provide a list of related references
+The equivalent Python command is:
 
-# License
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
-- License: <link>
+```bat
+.venv\Scripts\python.exe app\run_conversion.py --input "C:\path\to\part.jt" --output "C:\path\to\out\part.usd"
+```
+
+## Backend Selection
+
+By default, `--backend auto` follows the routing table in `SKILL.md`.
+
+```bat
+convert.bat "model.jt" "out\model.usd" --backend auto
+convert.bat "model.jt" "out\model.usd" --backend jt_core
+convert.bat "model.jt" "out\model.usd" --backend hoops_core
+convert.bat "site.dgn" "out\site.usd" --backend dgn_core
+```
+
+Use a forced backend only when the routing table allows it or when you are intentionally testing converter behavior.
+
+## Converter Options
+
+The wrapper creates the documented option class for the selected backend and passes `options.toArgs()` to `create_converter_task(...)`:
+
+| Backend | Option class |
+|---|---|
+| `jt_core` | `JTConverterOptions` |
+| `dgn_core` | `OdaDgnOptions` |
+| `hoops_core` | `HoopsOptions` |
+
+Pass backend-specific overrides with `--option key=value`. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
+
+```bat
+convert.bat "model.jt" "out\model.usd" --backend jt_core --option instancingStyle=0
+convert.bat "model.jt" "out\model.usd" --backend jt_core --option flatten=true
+convert.bat "site.dgn" "out\site.usd" --backend dgn_core --option curveConversionStyle=2
+convert.bat "assembly.step" "out\assembly.usd" --backend hoops_core --option tessLOD=4
+```
+
+Use the installed extension docs to confirm option names and enum values before passing overrides.
+
+## Inspect Installed Converter Docs
+
+The Kit registry packages are the source of truth for detailed converter API and options. After the extensions are downloaded, inspect local extension docs with:
+
+```bat
+.venv\Scripts\python.exe setup\inspect_extension_docs.py
+```
+
+Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before adding or changing converter options.
+
+## Repository Layout
+
+```text
+usd-convert-cad/
+├── README.md
+├── SKILL.md
+├── pyproject.toml
+├── install.bat
+├── validate.bat
+├── convert.bat
+├── app/
+│   └── run_conversion.py
+├── setup/
+│   ├── fetch_extensions.py
+│   ├── inspect_extension_docs.py
+│   └── validate_env.py
+└── src/
+    └── usd_convert_cad/
+        ├── __init__.py
+        ├── converter.py
+        ├── formats.py
+        ├── kit_runtime.py
+        └── report.py
+```
+
+## Notes
+
+- `omni.kit_app.KitApp` must be the first Omniverse import in the process.
+- The first conversion can take longer because Kit downloads converter extensions from the registry.
+- If a core module import fails, run `validate.bat` and inspect the downloaded extension packages before changing converter code.
+- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. External workflows may still call `convert.bat` directly.
