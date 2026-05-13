@@ -91,6 +91,14 @@ def _apply_option_config(options: Any, config: dict[str, Any]) -> Any:
     if not config:
         return options
 
+    parse_args_config = {key: str(value).lower() if isinstance(value, bool) else str(value) for key, value in config.items()}
+    if hasattr(options, "parseArgs"):
+        try:
+            options.parseArgs(parse_args_config)
+            return options
+        except TypeError:
+            pass
+
     if hasattr(options, "parse"):
         try:
             options.parse(config)

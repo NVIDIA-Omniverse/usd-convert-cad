@@ -26,16 +26,27 @@ The caller should read the JSON status report for the generated USD path, select
 |---|---|---|---|
 | `.jt` | `omni.kit.converter.jt_core` | `omni.kit.converter.hoops_core` | Prefer `jt_core` for explicit JT workflows. Use `hoops_core` only when requested or when `jt_core` is unavailable. |
 | `.dgn` | `omni.kit.converter.dgn_core` | `omni.kit.converter.hoops_core` | Prefer `dgn_core` for MicroStation/DGN workflows. Use `hoops_core` only when requested or when `dgn_core` is unavailable. |
-| `.stp`, `.step` | `omni.kit.converter.hoops_core` | None | Neutral CAD/B-Rep route. |
-| `.igs`, `.iges` | `omni.kit.converter.hoops_core` | None | Neutral CAD/B-Rep route. |
-| `.prt`, `.asm` | `omni.kit.converter.hoops_core` | None | Creo, NX, or assembly-style CAD route; exact support depends on the installed extension and licensing. |
-| `.catpart`, `.catproduct`, `.cgr`, `.3dxml` | `omni.kit.converter.hoops_core` | None | CATIA route; may require CAD converter licensing. |
-| `.sldprt`, `.sldasm`, `.slddrw` | `omni.kit.converter.hoops_core` | None | SolidWorks route; may require CAD converter licensing. |
-| `.ipt`, `.iam`, `.ipn` | `omni.kit.converter.hoops_core` | None | Autodesk Inventor route; may require CAD converter licensing. |
-| `.x_t`, `.x_b`, `.xmt_txt`, `.xmt_bin` | `omni.kit.converter.hoops_core` | None | Parasolid route. |
-| `.sat`, `.sab` | `omni.kit.converter.hoops_core` | None | ACIS route. |
+| `.catpart`, `.catproduct`, `.cgr` | `omni.kit.converter.hoops_core` | None | CATIA V5 route; may require CAD converter licensing. |
+| `.3dxml` | `omni.kit.converter.hoops_core` | None | CATIA V6 / 3DExperience route; may require CAD converter licensing. |
+| `.ifc`, `.ifczip` | `omni.kit.converter.hoops_core` | None | IFC route. |
+| `.prt` | `omni.kit.converter.hoops_core` | None | Siemens NX or Creo part route; exact interpretation depends on file content. |
+| `.asm` | `omni.kit.converter.hoops_core` | None | Creo or Solid Edge assembly route; exact interpretation depends on file content. |
+| `.xmt`, `.x_t`, `.x_b`, `.xmt_txt` | `omni.kit.converter.hoops_core` | None | Parasolid route. |
+| `.sldprt`, `.sldasm` | `omni.kit.converter.hoops_core` | None | SolidWorks route; may require CAD converter licensing. |
+| `.stl` | `omni.kit.converter.hoops_core` | None | STL route through HOOPS when using this CAD wrapper. |
+| `.ipt`, `.iam` | `omni.kit.converter.hoops_core` | None | Autodesk Inventor route; may require CAD converter licensing. |
+| `.dwg`, `.dxf` | `omni.kit.converter.hoops_core` | None | AutoCAD 3D route. |
+| `.rvt`, `.rfa` | `omni.kit.converter.hoops_core` | None | Revit route; may require CAD converter licensing. |
+| `.par`, `.pwd`, `.psm` | `omni.kit.converter.hoops_core` | None | Solid Edge route; may require CAD converter licensing. |
+| `.stp`, `.step`, `.igs`, `.iges` | `omni.kit.converter.hoops_core` | None | STEP / IGES route. |
 | `.3dm` | `omni.kit.converter.hoops_core` | None | Rhino route. |
-| `.par`, `.psm` | `omni.kit.converter.hoops_core` | None | Solid Edge route; may require CAD converter licensing. |
+| `.dae` | `omni.kit.converter.hoops_core` | None | Collada route. |
+| `.fbx` | `omni.kit.converter.hoops_core` | None | FBX route. |
+| `.obj` | `omni.kit.converter.hoops_core` | None | OBJ route. |
+| `.3ds` | `omni.kit.converter.hoops_core` | None | Autodesk 3DS route. |
+| `.3mf` | `omni.kit.converter.hoops_core` | None | 3MF route. |
+| `.gltf`, `.glb` | `omni.kit.converter.hoops_core` | None | glTF route. |
+| `.sat`, `.sab` | `omni.kit.converter.hoops_core` | None | ACIS route. |
 
 ## Routing Policy
 
@@ -49,15 +60,68 @@ Do not substitute mesh converters, hand-authored USD, or unrelated tools for CAD
 
 Install and validate:
 
-```bash
+```bat
 install.bat
 validate.bat
 ```
+
+`validate.bat` prints a final `[OK] Environment ready.` line and exits 0 on success, or `[FAIL] Environment not ready.` and a non-zero exit on failure. Agents should rely on the exit code as the authoritative contract; the Kit extension startup banner above the summary is informational only.
+
+## Shell Invocation on Windows
+
+This is a Windows-only tool; the wrappers (`install.bat`, `validate.bat`, `convert.bat`) are cmd-syntax batch files. Both `cmd.exe` and PowerShell can invoke them, but agent automation should prefer **PowerShell** for more predictable exit-code propagation, stream redirection, and quoting.
+
+| Shell | Invocation pattern | Notes |
+|---|---|---|
+| PowerShell (recommended) | `& 'C:\path\to\convert.bat' input.jt output\out.usd --backend auto` | Use the call operator `&` when invoking by absolute path. Check `$LASTEXITCODE` after the call. |
+| cmd.exe | `convert.bat input.jt output\out.usd --backend auto` | Invoke directly from the repo root or with the full path. Check `%ERRORLEVEL%`. |
+
+When invoking via an external tool runner, pass the full path to the `.bat` file and capture stdout and stderr together. Do not invoke the batch file by piping into `cmd /c` from a non-Windows shell wrapper — the `.bat` may silently no-op if the working directory or argument parsing is not preserved.
+
+## First-Run / Agent Setup Expectations
+
+Do not assume `.venv/` or `config.env` exist on a fresh checkout. They are generated local artifacts.
+
+Runtime selection differs between setup and conversion:
+
+| Operation | Python selection |
+|---|---|
+| `install.bat` | Discover Python 3.12 from the system first, preferring `py -3.12` and then `python` on `PATH`; create `.venv` from that interpreter. |
+| `convert.bat` and `validate.bat` | Use `PYTHON_EXE` from `config.env` when valid, then fall back to `.venv/Scripts/python.exe`; do not use arbitrary `PATH` Python for conversion. |
+
+Before calling `convert.bat`, agents should check setup state:
+
+| State | Action |
+|---|---|
+| `config.env` exists and `PYTHON_EXE` points to an existing Python | Run `convert.bat` directly. |
+| `.venv/Scripts/python.exe` exists but `config.env` is missing | Run `convert.bat` or `validate.bat`; the wrappers infer the repo-local venv Python. Regenerate `config.env` during the next `install.bat` run. |
+| `config.env` exists but its `PYTHON_EXE` path is missing **and** `.venv` is missing | Treat `config.env` as stale. Run `install.bat`, then `validate.bat`, then conversion. The wrapper would otherwise error out on the missing interpreter. |
+| Neither `.venv` nor `config.env` exists | Run `install.bat`, then `validate.bat`, then conversion. |
+| Setup or conversion fails and `--report` was supplied | Preserve or emit a blocked conversion report instead of relying only on console text. |
+
+`config.env` should contain only local runtime configuration, not secrets:
+
+```bat
+PYTHON_EXE=<absolute path to repo .venv Python>
+OMNI_KIT_ACCEPT_EULA=yes
+```
+
+The `.venv/` directory contains the Python 3.12 runtime dependencies, including `omniverse-kit` and the editable `usd-convert-cad` package. Converter extensions such as `jt_core`, `dgn_core`, and `hoops_core` may be fetched by `setup/fetch_extensions.py` during install or by the first conversion and are cached in the local Kit/Omniverse cache outside this repo.
+
+`install.bat` is intended to be idempotent: it should reuse an existing `.venv`, skip package installs that are already importable, refresh `config.env`, and check converter extensions before first conversion.
+
+For non-interactive agent workflows, always pass an explicit `--report` path under `_conversion`. Prefer `--quiet` to redirect verbose Kit logs to a sibling `.log` file and print only the status, report path, and log path. If conversion succeeds, read the JSON report and avoid reading the full log. If conversion fails, read the JSON report first and inspect only the relevant tail of the log when the report does not contain enough detail.
 
 Convert with automatic routing:
 
 ```bash
 convert.bat asset.jt output/asset.usd --backend auto
+```
+
+Low-output agent conversion:
+
+```bash
+convert.bat asset.jt output/asset.usd --backend auto --report output/_conversion/cad-conversion-status.json --quiet
 ```
 
 By default, this writes a JSON status report to `output/_conversion/<output_stem>-<conversion_id>.json`. The report includes `conversion_id` and `created_at_utc`.
