@@ -56,7 +56,7 @@ echo  Installing omniverse-kit from NVIDIA PyPI...
 if errorlevel 1 exit /b 1
 
 echo  Installing repo package in editable mode...
-"%VENV_PY%" -m pip install -e "%REPO%" --no-deps
+"%VENV_PY%" -m pip install -e "%REPO:~0,-1%" --no-deps
 if errorlevel 1 exit /b 1
 
 set CFG=%REPO%config.env
