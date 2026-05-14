@@ -2,13 +2,13 @@
 
 Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and CAD converter core extensions pulled from the Kit registry.
 
-This repository is a small reference app for routing CAD files to explicit Kit converter cores:
+This repository is a small reference app and NVIDIA Agent Skill for routing CAD files to explicit Kit converter cores:
 
 - `omni.kit.converter.jt_core` for JT files.
 - `omni.kit.converter.dgn_core` for DGN files.
 - `omni.kit.converter.hoops_core` for general CAD and neutral CAD formats.
 
-The goal is to keep the routing policy visible in code and in `SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
+The goal is to keep the routing policy visible in code and in `.agents/skills/usd-convert-cad/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
 
 ## Role In Physical AI Workflows
 
@@ -64,7 +64,7 @@ On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Lin
 
 ## Backend Selection
 
-By default, `--backend auto` follows the routing table in `SKILL.md`.
+By default, `--backend auto` follows the routing table in `.agents/skills/usd-convert-cad/SKILL.md`.
 
 ```bash
 python convert.py "model.jt" "model.usd" --backend auto
@@ -110,11 +110,19 @@ Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and example
 
 ```text
 usd-convert-cad/
+├── .agents/
+│   └── skills/
+│       └── usd-convert-cad/
+│           └── SKILL.md # canonical skill source
+├── .claude/
+│   └── skills -> ../.agents/skills # compatibility symlink
+├── .codex/
+│   └── skills -> ../.agents/skills # compatibility symlink
 ├── .gitignore
+├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── README.md
-├── SKILL.md
 ├── SECURITY.md
 ├── requirements.txt
 ├── pyproject.toml
@@ -144,3 +152,4 @@ usd-convert-cad/
 - The first conversion can take longer because Kit downloads converter extensions from the registry.
 - If a core module import fails, run `python validate.py` and inspect the downloaded extension packages before changing converter code.
 - `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. External workflows should call `python convert.py` for the repo-local wrapper behavior.
+- `.agents/skills/` is the canonical skill path. Local `.claude/skills` and `.codex/skills` compatibility links can point to it for agent-specific discovery.

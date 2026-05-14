@@ -34,8 +34,9 @@ Before submitting a pull request:
   changes.
 - Convert a small CAD sample when changing conversion behavior, backend
   selection, converter options, reports, or Kit startup.
-- Update `README.md`, `SKILL.md`, or both when behavior, options, supported
-  formats, setup requirements, or external workflow contracts change.
+- Update `README.md`, `.agents/skills/usd-convert-cad/SKILL.md`, or both when
+  behavior, options, supported formats, setup requirements, or external
+  workflow contracts change.
 - Inspect installed converter extension docs with
   `python setup/inspect_extension_docs.py` before changing backend-specific
   options or API assumptions.
@@ -96,6 +97,10 @@ options, warnings, errors, and pass/fail status.
 
 - `convert.py`, `install.py`, and `validate.py` are repo-local wrappers and
   should remain the recommended external entry points.
+- `.agents/skills/usd-convert-cad/SKILL.md` is the canonical NVIDIA Agent Skill
+  entrypoint. Keep the directory name aligned with the `name` frontmatter.
+- Local `.claude/skills` and `.codex/skills` compatibility links should point to
+  `.agents/skills`; do not maintain duplicate skill copies there.
 - `app/run_conversion.py` is the runtime entry point used by the wrappers.
 - `src/usd_convert_cad/formats.py` owns the routing table and supported suffixes.
 - `src/usd_convert_cad/converter.py` owns option construction and converter task
