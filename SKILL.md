@@ -18,10 +18,10 @@ Recommended external caller contract:
 
 ```bash
 USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
-python "$USD_CONVERT_CAD_ROOT/convert.py" asset.jt output/asset.usd --backend auto --report output/_conversion/cad-conversion-status.json
+python "$USD_CONVERT_CAD_ROOT/convert.py" asset.jt asset.usd --backend auto --report cad-conversion-status.json
 ```
 
-The caller should read the JSON status report for the generated USD path, selected backend, warnings, errors, and pass/fail status before continuing to USD validation or SimReady workflows. Prefer an explicit `--report` path under `_conversion` for automated callers. When `--report` is omitted, the CLI writes `<output_dir>/_conversion/<output_stem>-<conversion_id>.json` and prints the report path.
+The caller should read the JSON status report for the generated USD path, selected backend, warnings, errors, and pass/fail status before continuing to USD validation or SimReady workflows. When an output path is provided, generated files stay in the directory the caller specified. If the output path is omitted, the CLI writes the USD and report under an `_conversion/` directory next to the input file.
 
 ## Routing Table
 
@@ -76,7 +76,7 @@ The repo-local wrappers (`install.py`, `validate.py`, `convert.py`) are cross-pl
 
 | Shell | Invocation pattern | Notes |
 |---|---|---|
-| bash / sh | `python /path/to/usd-convert-cad/convert.py input.jt output/out.usd --backend auto` | Check `$?` after the call. |
+| bash / sh | `python /path/to/usd-convert-cad/convert.py input.jt input.usd --backend auto` | Check `$?` after the call. |
 
 
 When invoking via an external tool runner, pass the full path to the `.py` wrapper and capture stdout and stderr together. The wrappers use absolute paths for repo-local internals; relative conversion inputs, outputs, reports, and logs are resolved by the caller's working directory.
@@ -113,37 +113,37 @@ The `.venv/` directory contains the Python 3.12 runtime dependencies, including 
 
 `install.py` is intended to be idempotent: it should reuse an existing `.venv`, skip package installs that are already importable, refresh `config.env`, and check converter extensions before first conversion.
 
-For non-interactive agent workflows, always pass an explicit `--report` path under `_conversion`. Prefer `--quiet` to redirect verbose Kit logs to a sibling `.log` file and print only the status, report path, and log path. If conversion succeeds, read the JSON report and avoid reading the full log. If conversion fails, read the JSON report first and inspect only the relevant tail of the log when the report does not contain enough detail.
+For non-interactive agent workflows, always pass an explicit `--report` path in the same directory as the requested output. Prefer `--quiet` to redirect verbose Kit logs to a sibling `.log` file and print only the status, report path, and log path. If conversion succeeds, read the JSON report and avoid reading the full log. If conversion fails, read the JSON report first and inspect only the relevant tail of the log when the report does not contain enough detail.
 
 Convert with automatic routing:
 
 ```bash
-python convert.py asset.jt output/asset.usd --backend auto
+python convert.py asset.jt asset.usd --backend auto
 ```
 
 Low-output agent conversion:
 
 ```bash
-python convert.py asset.jt output/asset.usd --backend auto --report output/_conversion/cad-conversion-status.json --quiet
+python convert.py asset.jt asset.usd --backend auto --report cad-conversion-status.json --quiet
 ```
 
-By default, this writes a JSON status report to `output/_conversion/<output_stem>-<conversion_id>.json`. The report includes `conversion_id` and `created_at_utc`.
+By default, this writes a JSON status report beside the output USD as `<output_stem>-<conversion_id>.json`. If no output path is provided, the output USD and report are written under an `_conversion/` directory next to the input file. The report includes `conversion_id` and `created_at_utc`.
 
 Force a supported backend:
 
 ```bash
-python convert.py asset.jt output/asset.usd --backend jt_core
-python convert.py asset.jt output/asset.usd --backend hoops_core
-python convert.py site.dgn output/site.usd --backend dgn_core
+python convert.py asset.jt asset.usd --backend jt_core
+python convert.py asset.jt asset.usd --backend hoops_core
+python convert.py site.dgn site.usd --backend dgn_core
 ```
 
 Override documented converter options:
 
 ```bash
-python convert.py asset.jt output/asset.usd --backend jt_core --option instancingStyle=0
-python convert.py asset.jt output/asset.usd --backend jt_core --option flatten=true
-python convert.py site.dgn output/site.usd --backend dgn_core --option curveConversionStyle=2
-python convert.py assembly.step output/assembly.usd --backend hoops_core --option tessLOD=4
+python convert.py asset.jt asset.usd --backend jt_core --option instancingStyle=0
+python convert.py asset.jt asset.usd --backend jt_core --option flatten=true
+python convert.py site.dgn site.usd --backend dgn_core --option curveConversionStyle=2
+python convert.py assembly.step assembly.usd --backend hoops_core --option tessLOD=4
 ```
 
 ## Converter Options
@@ -174,7 +174,7 @@ Read the extension's `SKILL.md`, `README.md`, `extension.toml`, and examples bef
 6. Create the selected option class, apply `--option key=value` overrides, and call `options.toArgs()`.
 7. Run `await converter.create_converter_task(input_path, output_path, options.toArgs())`.
 8. Verify `status.error_code == 0`, `output_url` is non-empty, and the expected USD output exists.
-9. Emit a JSON status report under `_conversion` unless the caller supplied `--report`.
+9. Emit a JSON status report beside the output USD unless the caller supplied `--report`.
 
 ## Blocked Cases
 

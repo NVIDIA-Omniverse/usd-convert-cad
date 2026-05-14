@@ -18,18 +18,18 @@ Recommended integration contract:
 
 ```bash
 USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
-python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "/path/to/output/model.usd" --backend auto --report "/path/to/output/_conversion/cad-conversion-status.json"
+python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "model.usd" --backend auto --report "cad-conversion-status.json"
 ```
 
 The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, selected backend, converter module, converter options, warnings, errors, and pass/fail status.
 
-If `--report` is omitted, the CLI writes a timestamped report under the output folder:
+When an output path is provided, generated files stay in the directory the caller specified. If `--report` is omitted, the CLI writes a timestamped report beside the output USD:
 
 ```text
-<output_dir>/_conversion/<output_stem>-<conversion_id>.json
+<output_dir>/<output_stem>-<conversion_id>.json
 ```
 
-For automated callers, prefer passing an explicit `--report` path under `_conversion` so the caller already knows where to read the result. The timestamped default is useful for ad hoc runs and preserving conversion history.
+If the output path is omitted, the CLI writes the USD and report under an `_conversion/` directory next to the input file. For automated callers, prefer passing an explicit `--report` path so the caller already knows where to read the result. The timestamped default is useful for ad hoc runs and preserving conversion history.
 
 ## Requirements
 
@@ -52,12 +52,12 @@ python validate.py
 python convert.py "/path/to/part.jt" "/path/to/out/part.usd"
 ```
 
-This writes the converted USD and a status report under `/path/to/out/_conversion/`.
+This writes the converted USD and status report beside the requested output path. If the output path is omitted, they are written into `_conversion` folder generated in the input file directory.
 
 The equivalent Python command is:
 
 ```bash
-.venv/bin/python app/run_conversion.py --input "/path/to/part.jt" --output "/path/to/out/part.usd"
+.venv/bin/python app/run_conversion.py --input "/path/to/part.jt" --output "/path/to/part.usd"
 ```
 
 On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Linux, it is `.venv/bin/python`.
@@ -67,10 +67,10 @@ On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Lin
 By default, `--backend auto` follows the routing table in `SKILL.md`.
 
 ```bash
-python convert.py "model.jt" "out/model.usd" --backend auto
-python convert.py "model.jt" "out/model.usd" --backend jt_core
-python convert.py "model.jt" "out/model.usd" --backend hoops_core
-python convert.py "site.dgn" "out/site.usd" --backend dgn_core
+python convert.py "model.jt" "model.usd" --backend auto
+python convert.py "model.jt" "model.usd" --backend jt_core
+python convert.py "model.jt" "model.usd" --backend hoops_core
+python convert.py "site.dgn" "site.usd" --backend dgn_core
 ```
 
 Use a forced backend only when the routing table allows it or when you are intentionally testing converter behavior.
@@ -88,10 +88,10 @@ The wrapper creates the documented option class for the selected backend and pas
 Pass backend-specific overrides with `--option key=value`. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
 
 ```bash
-python convert.py "model.jt" "out/model.usd" --backend jt_core --option instancingStyle=0
-python convert.py "model.jt" "out/model.usd" --backend jt_core --option flatten=true
-python convert.py "site.dgn" "out/site.usd" --backend dgn_core --option curveConversionStyle=2
-python convert.py "assembly.step" "out/assembly.usd" --backend hoops_core --option tessLOD=4
+python convert.py "model.jt" "model.usd" --backend jt_core --option instancingStyle=0
+python convert.py "model.jt" "model.usd" --backend jt_core --option flatten=true
+python convert.py "site.dgn" "site.usd" --backend dgn_core --option curveConversionStyle=2
+python convert.py "assembly.step" "assembly.usd" --backend hoops_core --option tessLOD=4
 ```
 
 Use the installed extension docs to confirm option names and enum values before passing overrides.
@@ -110,13 +110,18 @@ Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and example
 
 ```text
 usd-convert-cad/
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
 ├── README.md
 ├── SKILL.md
+├── SECURITY.md
+├── requirements.txt
 ├── pyproject.toml
+├── _script_utils.py
+├── convert.py
 ├── install.py
 ├── validate.py
-├── convert.py
-├── _script_utils.py
 ├── app/
 │   └── run_conversion.py
 ├── setup/
@@ -126,6 +131,7 @@ usd-convert-cad/
 └── src/
     └── usd_convert_cad/
         ├── __init__.py
+        ├── cli.py
         ├── converter.py
         ├── formats.py
         ├── kit_runtime.py

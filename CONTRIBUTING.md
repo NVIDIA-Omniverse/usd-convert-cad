@@ -1,6 +1,3 @@
-<!-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
-<!-- SPDX-License-Identifier: Apache-2.0 -->
-
 # Contributing
 
 Thank you for your interest in contributing to `usd-convert-cad`.
@@ -77,8 +74,6 @@ python -m pip install --upgrade build
 python -m build
 ```
 
-The build writes source and wheel distributions to `dist/`.
-
 ## Testing
 
 There is no large checked-in CAD test corpus. Prefer small sample assets that
@@ -90,7 +85,7 @@ Useful smoke tests:
 ```bash
 python validate.py
 python convert.py --formats
-python convert.py input.jt output/input.usd --backend auto --report output/_conversion/cad-conversion-status.json
+python convert.py input.jt input.usd --backend auto --report cad-conversion-status.json
 ```
 
 When a conversion fails, read the JSON report first, then inspect the relevant
@@ -171,7 +166,7 @@ involved.
 - Add comments only where they clarify non-obvious Kit startup, converter
   routing, conversion report, or USD behavior.
 - Do not commit `.venv/`, `config.env`, `__pycache__/`, `*.pyc`, local
-  Omniverse/Kit caches, generated reports, or large CAD assets.
+  Omniverse/Kit caches, `_conversion/`, generated reports, or large CAD assets.
 
 ## License
 

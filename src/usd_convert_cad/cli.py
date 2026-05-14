@@ -37,13 +37,22 @@ def print_formats() -> None:
 
 
 def default_report_path(output_path: Path, conversion_id: str) -> Path:
-    return output_path.resolve().parent / "_conversion" / f"{output_path.stem}-{conversion_id}.json"
+    output_dir = output_path.resolve().parent
+    return output_dir / f"{output_path.stem}-{conversion_id}.json"
+
+
+def default_output_path(input_path: Path) -> Path:
+    return input_path.resolve().parent / "_conversion" / input_path.with_suffix(".usd").name
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert CAD files to USD with explicit Kit converter core routing.")
     parser.add_argument("--input", type=Path, help="Input CAD file path.")
-    parser.add_argument("--output", type=Path, help="Output .usd, .usda, .usdc, or .usdz path.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output .usd, .usda, .usdc, or .usdz path. Defaults to <input_dir>/_conversion/<input>.usd.",
+    )
     parser.add_argument("--backend", default="auto", help="auto, jt_core, dgn_core, or hoops_core.")
     parser.add_argument("--fine", action="store_true", help="Use dChordHeight=0.001 and dAngleTolerance=10.")
     parser.add_argument("--coarse", action="store_true", help="Use dChordHeight=0.1 and dAngleTolerance=45.")
@@ -54,7 +63,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-meter-units", action="store_true")
     parser.add_argument("--keep-hidden", action="store_true")
     parser.add_argument("--option", action="append", default=[], metavar="KEY=VALUE", help="Pass a converter-specific option.")
-    parser.add_argument("--report", type=Path, help="Write JSON conversion report. Defaults to output_dir/_conversion/<stem>-<conversion_id>.json.")
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Write JSON conversion report. Defaults beside the output USD.",
+    )
     parser.add_argument("--markdown-report", type=Path, help="Write Markdown conversion report.")
     parser.add_argument("--formats", action="store_true", help="List supported file types and routing.")
     parser.add_argument("--shutdown", action="store_true", help="Shut down Kit after this conversion.")
@@ -74,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
 
     output = args.output
     if output is None:
-        output = args.input.with_suffix(".usd")
+        output = default_output_path(args.input)
 
     if args.fine and args.coarse:
         parser.error("--fine and --coarse are mutually exclusive")

@@ -1,3 +1,4 @@
+.claude
 .venv/
 config.env
 __pycache__/
@@ -8,6 +9,7 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
+_conversion/
 *.usd
 *.usda
 *.usdc
