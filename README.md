@@ -16,9 +16,9 @@ The goal is to keep the routing policy visible in code and in `SKILL.md`, while 
 
 Recommended integration contract:
 
-```bat
-set USD_CONVERT_CAD_ROOT=C:\Github\usd-convert-cad
-%USD_CONVERT_CAD_ROOT%\convert.bat "C:\path\to\model.jt" "C:\output\model.usd" --backend auto --report "C:\output\_conversion\cad-conversion-status.json"
+```bash
+USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
+python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "/path/to/output/model.usd" --backend auto --report "/path/to/output/_conversion/cad-conversion-status.json"
 ```
 
 The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, selected backend, converter module, converter options, warnings, errors, and pass/fail status.
@@ -33,7 +33,6 @@ For automated callers, prefer passing an explicit `--report` path under `_conver
 
 ## Requirements
 
-- Windows.
 - Python 3.12.
 - `omniverse-kit` installed from `https://pypi.nvidia.com`.
 - Network access to the Kit extension registry on first run.
@@ -41,35 +40,37 @@ For automated callers, prefer passing an explicit `--report` path under `_conver
 
 For non-interactive runs, set:
 
-```bat
-set OMNI_KIT_ACCEPT_EULA=yes
+```bash
+export OMNI_KIT_ACCEPT_EULA=yes
 ```
 
 ## Quick Start
 
-```bat
-install.bat
-validate.bat
-convert.bat "C:\path\to\part.jt" "C:\path\to\out\part.usd"
+```bash
+python install.py
+python validate.py
+python convert.py "/path/to/part.jt" "/path/to/out/part.usd"
 ```
 
-This writes the converted USD and a status report under `C:\path\to\out\_conversion\`.
+This writes the converted USD and a status report under `/path/to/out/_conversion/`.
 
 The equivalent Python command is:
 
-```bat
-.venv\Scripts\python.exe app\run_conversion.py --input "C:\path\to\part.jt" --output "C:\path\to\out\part.usd"
+```bash
+.venv/bin/python app/run_conversion.py --input "/path/to/part.jt" --output "/path/to/out/part.usd"
 ```
+
+On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Linux, it is `.venv/bin/python`.
 
 ## Backend Selection
 
 By default, `--backend auto` follows the routing table in `SKILL.md`.
 
-```bat
-convert.bat "model.jt" "out\model.usd" --backend auto
-convert.bat "model.jt" "out\model.usd" --backend jt_core
-convert.bat "model.jt" "out\model.usd" --backend hoops_core
-convert.bat "site.dgn" "out\site.usd" --backend dgn_core
+```bash
+python convert.py "model.jt" "out/model.usd" --backend auto
+python convert.py "model.jt" "out/model.usd" --backend jt_core
+python convert.py "model.jt" "out/model.usd" --backend hoops_core
+python convert.py "site.dgn" "out/site.usd" --backend dgn_core
 ```
 
 Use a forced backend only when the routing table allows it or when you are intentionally testing converter behavior.
@@ -86,11 +87,11 @@ The wrapper creates the documented option class for the selected backend and pas
 
 Pass backend-specific overrides with `--option key=value`. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
 
-```bat
-convert.bat "model.jt" "out\model.usd" --backend jt_core --option instancingStyle=0
-convert.bat "model.jt" "out\model.usd" --backend jt_core --option flatten=true
-convert.bat "site.dgn" "out\site.usd" --backend dgn_core --option curveConversionStyle=2
-convert.bat "assembly.step" "out\assembly.usd" --backend hoops_core --option tessLOD=4
+```bash
+python convert.py "model.jt" "out/model.usd" --backend jt_core --option instancingStyle=0
+python convert.py "model.jt" "out/model.usd" --backend jt_core --option flatten=true
+python convert.py "site.dgn" "out/site.usd" --backend dgn_core --option curveConversionStyle=2
+python convert.py "assembly.step" "out/assembly.usd" --backend hoops_core --option tessLOD=4
 ```
 
 Use the installed extension docs to confirm option names and enum values before passing overrides.
@@ -99,8 +100,8 @@ Use the installed extension docs to confirm option names and enum values before 
 
 The Kit registry packages are the source of truth for detailed converter API and options. After the extensions are downloaded, inspect local extension docs with:
 
-```bat
-.venv\Scripts\python.exe setup\inspect_extension_docs.py
+```bash
+.venv/bin/python setup/inspect_extension_docs.py
 ```
 
 Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before adding or changing converter options.
@@ -112,9 +113,10 @@ usd-convert-cad/
 ├── README.md
 ├── SKILL.md
 ├── pyproject.toml
-├── install.bat
-├── validate.bat
-├── convert.bat
+├── install.py
+├── validate.py
+├── convert.py
+├── _script_utils.py
 ├── app/
 │   └── run_conversion.py
 ├── setup/
@@ -134,5 +136,5 @@ usd-convert-cad/
 
 - `omni.kit_app.KitApp` must be the first Omniverse import in the process.
 - The first conversion can take longer because Kit downloads converter extensions from the registry.
-- If a core module import fails, run `validate.bat` and inspect the downloaded extension packages before changing converter code.
-- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. External workflows may still call `convert.bat` directly.
+- If a core module import fails, run `python validate.py` and inspect the downloaded extension packages before changing converter code.
+- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. External workflows should call `python convert.py` for the repo-local wrapper behavior.
