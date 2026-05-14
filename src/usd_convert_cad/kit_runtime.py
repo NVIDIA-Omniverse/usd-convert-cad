@@ -12,6 +12,7 @@ DEFAULT_EXTENSIONS = (
     "omni.kit.converter.jt_core",
     "omni.kit.converter.dgn_core",
 )
+BASE_EXTENSIONS = ("omni.kit.registry.nucleus",)
 
 _APP = None
 
@@ -55,7 +56,7 @@ def start_kit(extra_extensions: Iterable[str] = ()) -> object:
             "python -m pip install omniverse-kit --extra-index-url https://pypi.nvidia.com"
         ) from exc
 
-    extensions = (*DEFAULT_EXTENSIONS, *tuple(extra_extensions))
+    extensions = (*BASE_EXTENSIONS, *tuple(extra_extensions)) if extra_extensions else DEFAULT_EXTENSIONS
     _APP = KitApp()
     _APP.startup(startup_args(extensions))
     return _APP

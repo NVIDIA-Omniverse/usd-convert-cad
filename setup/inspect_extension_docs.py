@@ -76,7 +76,7 @@ def main() -> int:
     matches = find_docs()
     print()
     if not matches:
-        print("No converter docs found. Run install.bat or setup/fetch_extensions.py first.")
+        print("No converter docs found. Run python install.py or setup/fetch_extensions.py first.")
         return 1
 
     print("Found candidate docs/examples:")
