@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 """Headless CAD-to-USD conversion through Omniverse Kit converter cores."""
 
 from usd_convert_cad.converter import convert_file

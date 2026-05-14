@@ -3,6 +3,9 @@ name: usd-convert-cad
 description: Convert CAD files to OpenUSD with a headless Omniverse Kit Python app. Use when routing JT, DGN, STEP, IGES, Creo, CATIA, NX, SolidWorks, Inventor, Parasolid, ACIS, or Rhino CAD files through jt_core, dgn_core, or hoops_core converter extensions.
 ---
 
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # USD Convert CAD
 
 ## Purpose
