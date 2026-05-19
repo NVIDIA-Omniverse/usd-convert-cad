@@ -1,5 +1,8 @@
 # Contributing
 
+<!-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
+<!-- SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0 -->
+
 Thank you for your interest in contributing to `usd-convert-cad`.
 
 This repository is a small Python reference app for headless CAD-to-USD
@@ -176,4 +179,5 @@ involved.
 ## License
 
 By contributing, you agree that your contributions will be licensed under the
-Apache License, Version 2.0. See `LICENSE` for details.
+Apache License, Version 2.0 and the Creative Commons Attribution 4.0
+International Public License. See `LICENSE` for details.

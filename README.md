@@ -1,5 +1,8 @@
 # usd-convert-cad
 
+<!-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
+<!-- SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0 -->
+
 Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and CAD converter core extensions pulled from the Kit registry.
 
 This repository is a small reference app and NVIDIA Agent Skill for routing CAD files to explicit Kit converter cores:
@@ -106,6 +109,16 @@ The Kit registry packages are the source of truth for detailed converter API and
 
 Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before adding or changing converter options.
 
+## License And Contributions
+
+This project is released under the Apache License, Version 2.0 and the Creative
+Commons Attribution 4.0 International Public License. See `LICENSE` for the full
+license text and `THIRD_PARTY_NOTICES.md` for third-party notices.
+
+External contributions are accepted only with Developer Certificate of Origin
+(DCO) sign-off. See `CONTRIBUTING.md` for contribution requirements and the full
+DCO text.
+
 ## Repository Layout
 
 ```text
@@ -124,6 +137,7 @@ usd-convert-cad/
 ├── LICENSE
 ├── README.md
 ├── SECURITY.md
+├── THIRD_PARTY_NOTICES.md
 ├── requirements.txt
 ├── pyproject.toml
 ├── _script_utils.py
