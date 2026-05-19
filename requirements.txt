@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0
+#
 # Requires Python 3.12.
 # Install with:
 #   python -m pip install -r requirements.txt --extra-index-url https://pypi.nvidia.com
