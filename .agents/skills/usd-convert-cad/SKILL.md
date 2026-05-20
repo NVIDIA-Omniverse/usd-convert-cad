@@ -10,7 +10,7 @@ description: Convert CAD files to OpenUSD with a headless Omniverse Kit Python a
 
 ## Purpose
 
-Use this skill to convert CAD files to USD with the repo-local headless Kit app. The app installs `omniverse-kit` through pip, pulls converter extensions from the Kit registry, routes files by type, and writes a conversion report.
+Use this skill to convert CAD files to USD with the repo-local headless Kit app. The app installs `omniverse-kit` through pip from PyPI with NVIDIA's documented extra index, pulls converter extensions from the Kit registry, routes files by type, and writes a conversion report.
 
 `usd-convert-cad` is the standalone CAD conversion backend for higher-level Physical AI workflows. Repositories such as `physical-ai-skill-hub-dev` should call this repo's CLI instead of duplicating Kit startup, converter routing, or core converter API calls.
 

@@ -13,6 +13,8 @@ from _script_utils import REPO_ROOT, VENV_ROOT, exit_with, run_command, venv_pyt
 
 PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 OMNIVERSE_KIT_PACKAGE = "omniverse-kit"
+PYPI_INDEX_URL = "https://pypi.org/simple"
+NVIDIA_EXTRA_INDEX_URL = "https://pypi.nvidia.com"
 
 
 def _python_version(command: list[str]) -> tuple[int, int] | None:
@@ -171,11 +173,11 @@ def main() -> int:
     else:
         if installed_kit_version:
             print(
-                f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from NVIDIA PyPI "
+                f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from PyPI "
                 f"({installed_kit_version} -> {required_kit_version})..."
             )
         else:
-            print(f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from NVIDIA PyPI...")
+            print(f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from PyPI...")
         rc = run_command(
             [
                 venv_py,
@@ -183,8 +185,10 @@ def main() -> int:
                 "pip",
                 "install",
                 required_kit_requirement,
+                "--index-url",
+                PYPI_INDEX_URL,
                 "--extra-index-url",
-                "https://pypi.nvidia.com",
+                NVIDIA_EXTRA_INDEX_URL,
             ]
         )
         if rc:
