@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(& 'C:\\\\Github\\\\hoops-converter\\\\data\\\\tests\\\\_batch_output\\\\run_batch.ps1')"
-    ]
-  }
-}
