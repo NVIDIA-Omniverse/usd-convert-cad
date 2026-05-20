@@ -116,6 +116,15 @@ def installed_package_version(python_exe: Path, package: str) -> str | None:
     return probe.stdout.strip()
 
 
+def print_eula_notice() -> None:
+    print()
+    print(" NVIDIA Omniverse Kit EULA notice:")
+    print("  This setup writes OMNI_KIT_ACCEPT_EULA=yes to config.env and starts Kit")
+    print("  with EULA/privacy consent flags so converter extensions can be checked.")
+    print("  Continue only if you accept the applicable NVIDIA Omniverse Kit terms.")
+    print()
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
@@ -190,11 +199,14 @@ def main() -> int:
     else:
         print(" [OK] usd-convert-cad package already installed.")
 
+    print_eula_notice()
+
     config_path = REPO_ROOT / "config.env"
     config_path.write_text(
         "\n".join(
             [
                 "# usd-convert-cad configuration",
+                "# OMNI_KIT_ACCEPT_EULA=yes is written by install.py after printing the EULA notice.",
                 f"PYTHON_EXE={venv_py}",
                 "OMNI_KIT_ACCEPT_EULA=yes",
                 "",
