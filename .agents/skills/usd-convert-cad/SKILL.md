@@ -72,14 +72,18 @@ python validate.py
 
 ## Shell Invocation
 
-The repo-local wrappers (`install.py`, `validate.py`, `convert.py`) are cross-platform Python scripts. They can run from PowerShell, cmd.exe, bash, or other shells as long as Python 3.12 is available for setup and the repo-local `.venv` exists for validation/conversion.
+The repo-local wrappers (`install.py`, `validate.py`, `convert.py`) are the public cross-platform entrypoints. They can run from PowerShell, cmd.exe, bash, or other shells as long as Python 3.12 is available for setup and the repo-local `.venv` exists for validation/conversion.
+
+Use the root `convert.py` wrapper for external workflows. It accepts positional input/output paths, supports `--quiet` and `--log`, resolves the repo-local runtime Python, and forwards normalized arguments to `app/run_conversion.py`. The internal `app/run_conversion.py` command expects `--input` and optional `--output`; use it only when already running under the repo-local runtime.
 
 | Shell | Invocation pattern | Notes |
 |---|---|---|
 | bash / sh | `python /path/to/usd-convert-cad/convert.py input.jt input.usd --backend auto` | Check `$?` after the call. |
+| PowerShell | `python C:/path/to/usd-convert-cad/convert.py input.jt input.usd --backend auto` | Check `$LASTEXITCODE` after the call. |
+| cmd.exe | `python C:\path\to\usd-convert-cad\convert.py input.jt input.usd --backend auto` | Check `%ERRORLEVEL%` after the call. |
 
 
-When invoking via an external tool runner, pass the full path to the `.py` wrapper and capture stdout and stderr together. The wrappers use absolute paths for repo-local internals; relative conversion inputs, outputs, reports, and logs are resolved by the caller's working directory.
+When invoking via an external tool runner, pass the full path to the root `convert.py` wrapper and capture stdout and stderr together. The wrappers use absolute paths for repo-local internals; relative conversion inputs, outputs, reports, and logs are resolved by the caller's working directory.
 
 ## First-Run / Agent Setup Expectations
 
@@ -113,7 +117,7 @@ The `.venv/` directory contains the Python 3.12 runtime dependencies, including 
 
 `install.py` is intended to be idempotent: it should reuse an existing `.venv`, skip package installs that are already importable, refresh `config.env`, and check converter extensions before first conversion.
 
-For non-interactive agent workflows, always pass an explicit `--report` path in the same directory as the requested output. Prefer `--quiet` to redirect verbose Kit logs to a sibling `.log` file and print only the status, report path, and log path. If conversion succeeds, read the JSON report and avoid reading the full log. If conversion fails, read the JSON report first and inspect only the relevant tail of the log when the report does not contain enough detail.
+For non-interactive agent workflows, always pass an explicit `--report` path in the same directory as the requested output. With the root `convert.py` wrapper, prefer `--quiet` to redirect verbose Kit logs to a sibling `.log` file and print only the status, report path, and log path. Use `--log <path>` when the caller needs a specific log location. If conversion succeeds, read the JSON report and avoid reading the full log. If conversion fails, read the JSON report first and inspect only the relevant tail of the log when the report does not contain enough detail.
 
 Convert with automatic routing:
 
@@ -125,6 +129,7 @@ Low-output agent conversion:
 
 ```bash
 python convert.py asset.jt asset.usd --backend auto --report cad-conversion-status.json --quiet
+python convert.py asset.jt asset.usd --backend auto --report cad-conversion-status.json --quiet --log cad-conversion.log
 ```
 
 By default, this writes a JSON status report beside the output USD as `<output_stem>-<conversion_id>.json`. If no output path is provided, the output USD and report are written under an `_conversion/` directory next to the input file. The report includes `conversion_id` and `created_at_utc`.
@@ -162,7 +167,7 @@ For detailed converter APIs and option names, inspect the installed Kit extensio
 python setup/inspect_extension_docs.py
 ```
 
-Read the extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before selecting `--option` overrides. The agent may answer option-discovery questions from these docs, but should use `convert.py` or `app/run_conversion.py` for actual conversion execution.
+Read the extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before selecting `--option` overrides. The agent may answer option-discovery questions from these docs, but should use the root `convert.py` wrapper for actual conversion execution unless it is intentionally testing the internal runtime command.
 
 ## Workflow
 
