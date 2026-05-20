@@ -12,7 +12,7 @@ description = "Headless Omniverse Kit CAD to USD conversion using explicit JT, D
 license = { file = "LICENSE" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "omniverse-kit",
+    "omniverse-kit==110.1.1.305458",
 ]
 
 [project.scripts]
@@ -33,7 +33,6 @@ include = [
     "/CONTRIBUTING.md",
     "/SECURITY.md",
     "/CHANGELOG.md",
-    "/requirements.txt",
     "/pyproject.toml",
     "/convert.py",
     "/install.py",

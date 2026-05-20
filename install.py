@@ -7,8 +7,12 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 
 from _script_utils import REPO_ROOT, VENV_ROOT, exit_with, run_command, venv_python
+
+PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
+OMNIVERSE_KIT_PACKAGE = "omniverse-kit"
 
 
 def _python_version(command: list[str]) -> tuple[int, int] | None:
@@ -30,6 +34,30 @@ def _python_version(command: list[str]) -> tuple[int, int] | None:
 
 def _display_command(command: list[str]) -> str:
     return " ".join(command)
+
+
+def project_dependencies() -> list[str]:
+    pyproject = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
+    dependencies = pyproject.get("project", {}).get("dependencies")
+    if not isinstance(dependencies, list) or not all(isinstance(item, str) for item in dependencies):
+        raise ValueError("pyproject.toml must define [project].dependencies as a list of strings.")
+    return dependencies
+
+
+def locked_requirement(package: str) -> str | None:
+    package_prefix = f"{package}=="
+    for dependency in project_dependencies():
+        normalized = dependency.split(";", 1)[0].strip()
+        if normalized.lower().startswith(package_prefix):
+            return dependency
+    return None
+
+
+def locked_version(package: str) -> str | None:
+    requirement = locked_requirement(package)
+    if requirement is None:
+        return None
+    return requirement.split("==", 1)[1].split(";", 1)[0].strip()
 
 
 def discover_python_312() -> list[str] | None:
@@ -63,6 +91,31 @@ def package_installed(python_exe: Path, package: str) -> bool:
     return probe.returncode == 0
 
 
+def installed_package_version(python_exe: Path, package: str) -> str | None:
+    probe = subprocess.run(
+        [
+            str(python_exe),
+            "-c",
+            (
+                "from importlib.metadata import PackageNotFoundError, version\n"
+                "import sys\n"
+                "try:\n"
+                "    print(version(sys.argv[1]))\n"
+                "except PackageNotFoundError:\n"
+                "    raise SystemExit(1)\n"
+            ),
+            package,
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if probe.returncode != 0:
+        return None
+    return probe.stdout.strip()
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
@@ -93,25 +146,40 @@ def main() -> int:
     if rc:
         return rc
 
-    print(" Checking omniverse-kit package...")
-    if not package_installed(venv_py, "omniverse-kit"):
-        print(" Installing omniverse-kit from NVIDIA PyPI...")
+    required_kit_version = locked_version(OMNIVERSE_KIT_PACKAGE)
+    if required_kit_version is None:
+        print(f" [ERROR] {PYPROJECT_PATH} must pin {OMNIVERSE_KIT_PACKAGE} with ==.")
+        return 1
+
+    required_kit_requirement = locked_requirement(OMNIVERSE_KIT_PACKAGE)
+    if required_kit_requirement is None:
+        print(f" [ERROR] {PYPROJECT_PATH} must include {OMNIVERSE_KIT_PACKAGE}.")
+        return 1
+
+    installed_kit_version = installed_package_version(venv_py, OMNIVERSE_KIT_PACKAGE)
+    if installed_kit_version == required_kit_version:
+        print(f" [OK] {OMNIVERSE_KIT_PACKAGE} {required_kit_version} already installed.")
+    else:
+        if installed_kit_version:
+            print(
+                f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from NVIDIA PyPI "
+                f"({installed_kit_version} -> {required_kit_version})..."
+            )
+        else:
+            print(f" Installing locked {OMNIVERSE_KIT_PACKAGE} version from NVIDIA PyPI...")
         rc = run_command(
             [
                 venv_py,
                 "-m",
                 "pip",
                 "install",
-                "-r",
-                REPO_ROOT / "requirements.txt",
+                required_kit_requirement,
                 "--extra-index-url",
                 "https://pypi.nvidia.com",
             ]
         )
         if rc:
             return rc
-    else:
-        print(" [OK] omniverse-kit package already installed.")
 
     print(" Checking repo package...")
     if not package_installed(venv_py, "usd-convert-cad"):

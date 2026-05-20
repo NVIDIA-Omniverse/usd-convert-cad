@@ -57,7 +57,7 @@ def start_kit(extra_extensions: Iterable[str] = ()) -> object:
     except ImportError as exc:
         raise RuntimeError(
             "omniverse-kit is not installed. Install with: "
-            "python -m pip install omniverse-kit --extra-index-url https://pypi.nvidia.com"
+            "python install.py"
         ) from exc
 
     extensions = (*BASE_EXTENSIONS, *tuple(extra_extensions)) if extra_extensions else DEFAULT_EXTENSIONS

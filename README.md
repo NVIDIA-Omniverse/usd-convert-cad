@@ -138,7 +138,6 @@ usd-convert-cad/
 ├── README.md
 ├── SECURITY.md
 ├── THIRD_PARTY_NOTICES.md
-├── requirements.txt
 ├── pyproject.toml
 ├── _script_utils.py
 ├── convert.py
