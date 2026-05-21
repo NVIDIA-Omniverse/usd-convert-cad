@@ -37,7 +37,7 @@ Before submitting a pull request:
   changes.
 - Convert a small CAD sample when changing conversion behavior, converter
   options, reports, or Kit startup.
-- Update `README.md`, `skills/usd-convert-cad/SKILL.md`, or both when
+- Update `README.md`, `skills/omniverse-cad-to-usd/SKILL.md`, or both when
   behavior, options, supported formats, setup requirements, or external
   workflow contracts change.
 - Inspect installed converter extension docs with
@@ -100,7 +100,7 @@ options, warnings, errors, and pass/fail status.
 
 - `convert.py`, `install.py`, and `validate.py` are repo-local wrappers and
   should remain the recommended external entry points.
-- `skills/usd-convert-cad/SKILL.md` is the canonical NVIDIA Agent Skill
+- `skills/omniverse-cad-to-usd/SKILL.md` is the canonical NVIDIA Agent Skill
   entrypoint. Keep the directory name aligned with the `name` frontmatter.
 - Local agent compatibility links should point to `skills/`; do not maintain
   duplicate skill copies in legacy skill directories.

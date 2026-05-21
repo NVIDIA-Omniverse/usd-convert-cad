@@ -1,5 +1,5 @@
 ---
-name: usd-convert-cad
+name: omniverse-cad-to-usd
 description: Convert supported CAD files to OpenUSD with a headless Omniverse Kit Python app.
 version: "0.1.0"
 author: NVIDIA Omniverse
@@ -24,7 +24,7 @@ compatibility:
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0 -->
 
-# USD Convert CAD
+# Omniverse CAD to USD
 
 ## When to Use
 

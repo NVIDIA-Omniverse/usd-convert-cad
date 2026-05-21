@@ -9,7 +9,7 @@ This repository is a small reference app and NVIDIA Agent Skill for converting s
 
 - HOOPS converter core for JT, DGN, general CAD, and neutral CAD formats.
 
-The goal is to keep the supported-format policy visible in code and in `skills/usd-convert-cad/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
+The goal is to keep the supported-format policy visible in code and in `skills/omniverse-cad-to-usd/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
 
 ## Role In Physical AI Workflows
 
@@ -75,7 +75,7 @@ python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json
 
 ## Converter Core
 
-This wrapper uses the HOOPS converter core for every supported format listed in `skills/usd-convert-cad/SKILL.md`. The CLI does not expose converter selection.
+This wrapper uses the HOOPS converter core for every supported format listed in `skills/omniverse-cad-to-usd/SKILL.md`. The CLI does not expose converter selection.
 
 ```bash
 python convert.py "model.jt" "model.usd"

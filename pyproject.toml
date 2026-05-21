@@ -41,5 +41,5 @@ include = [
     "/app",
     "/setup",
     "/src",
-    "/skills/usd-convert-cad/SKILL.md",
+    "/skills/omniverse-cad-to-usd/SKILL.md",
 ]
