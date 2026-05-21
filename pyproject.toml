@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "usd-convert-cad"
+version = "0.1.0"
+description = "Headless Omniverse Kit CAD to USD conversion using explicit JT, DGN, and HOOPS converter cores."
+license = { file = "LICENSE" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "omniverse-kit==110.1.1.305458",
+]
+
+[project.scripts]
+usd-convert-cad = "usd_convert_cad.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/usd_convert_cad"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"LICENSE" = "share/usd-convert-cad/LICENSE"
+"THIRD_PARTY_NOTICES.md" = "share/usd-convert-cad/THIRD_PARTY_NOTICES.md"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/LICENSE",
+    "/THIRD_PARTY_NOTICES.md",
+    "/README.md",
+    "/CONTRIBUTING.md",
+    "/SECURITY.md",
+    "/CHANGELOG.md",
+    "/pyproject.toml",
+    "/convert.py",
+    "/install.py",
+    "/validate.py",
+    "/_script_utils.py",
+    "/app",
+    "/setup",
+    "/src",
+    "/.agents/skills/usd-convert-cad/SKILL.md",
+]
