@@ -11,7 +11,7 @@ from pathlib import Path
 import time
 from typing import Any
 
-from usd_convert_cad.formats import BackendInfo, choose_backend, detect_file_type
+from usd_convert_cad.formats import CONVERTER, ConverterInfo, detect_file_type, ensure_supported_file_type
 from usd_convert_cad.kit_runtime import start_kit
 from usd_convert_cad.report import ConversionReport, make_conversion_id, utc_timestamp
 
@@ -29,14 +29,14 @@ def _coerce_option_value(value: str) -> Any:
 
 
 def build_option_config(
-    backend: BackendInfo,
+    converter_info: ConverterInfo,
     *,
     no_materials: bool = False,
     keep_hidden: bool = False,
     extra_options: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
-    """Build the config dictionary passed through the backend option class."""
-    options: dict[str, Any] = dict(backend.default_options)
+    """Build the config dictionary passed through the converter option class."""
+    options: dict[str, Any] = dict(converter_info.default_options)
     warnings: list[str] = []
 
     if no_materials:
@@ -101,10 +101,10 @@ def _check_status_result(result: Any) -> str:
     return str(result)
 
 
-def _create_options(module: Any, backend: BackendInfo, config: dict[str, Any]) -> Any:
-    if not hasattr(module, backend.options_class_name):
-        raise RuntimeError(f"{backend.module_name} does not expose {backend.options_class_name}")
-    options_class = getattr(module, backend.options_class_name)
+def _create_options(module: Any, converter_info: ConverterInfo, config: dict[str, Any]) -> Any:
+    if not hasattr(module, converter_info.options_class_name):
+        raise RuntimeError(f"{converter_info.module_name} does not expose {converter_info.options_class_name}")
+    options_class = getattr(module, converter_info.options_class_name)
     options = options_class()
     return _apply_option_config(options, config)
 
@@ -116,22 +116,22 @@ def _options_to_args(options: Any) -> Any:
 
 
 async def _run_converter_task(
-    backend: BackendInfo,
+    converter_info: ConverterInfo,
     source_path: Path,
     output_path: Path,
     option_config: dict[str, Any],
 ) -> str:
-    module = importlib.import_module(backend.module_name)
+    module = importlib.import_module(converter_info.module_name)
     if not hasattr(module, "get_instance"):
-        raise RuntimeError(f"{backend.module_name} does not expose get_instance()")
+        raise RuntimeError(f"{converter_info.module_name} does not expose get_instance()")
 
     converter = module.get_instance()
     if converter is None:
-        raise RuntimeError(f"{backend.module_name}.get_instance() returned None")
+        raise RuntimeError(f"{converter_info.module_name}.get_instance() returned None")
     if not hasattr(converter, "create_converter_task"):
-        raise RuntimeError(f"{backend.module_name} instance does not expose create_converter_task()")
+        raise RuntimeError(f"{converter_info.module_name} instance does not expose create_converter_task()")
 
-    options = _create_options(module, backend, option_config)
+    options = _create_options(module, converter_info, option_config)
     result = await _await_result(
         converter.create_converter_task(
             str(source_path),
@@ -146,7 +146,6 @@ def convert_file(
     source_path: Path,
     output_path: Path,
     *,
-    backend: str = "auto",
     no_materials: bool = False,
     keep_hidden: bool = False,
     extra_options: dict[str, str] | None = None,
@@ -159,14 +158,13 @@ def convert_file(
     conversion_id = make_conversion_id(
         str(source_path),
         str(output_path),
-        backend,
         created_at_utc=created_at_utc,
     )
     warnings: list[str] = []
     errors: list[str] = []
 
     try:
-        selected_backend = choose_backend(source_path, backend)
+        ensure_supported_file_type(source_path)
     except ValueError as exc:
         return ConversionReport(
             conversion_id=conversion_id,
@@ -174,15 +172,13 @@ def convert_file(
             source_path=str(source_path),
             output_path=str(output_path),
             source_file_type=detect_file_type(source_path),
-            requested_backend=backend,
-            selected_backend="",
             converter_extension="",
             converter_module="",
             errors=[str(exc)],
         )
 
     option_config, option_warnings = build_option_config(
-        selected_backend,
+        CONVERTER,
         no_materials=no_materials,
         keep_hidden=keep_hidden,
         extra_options=extra_options,
@@ -198,8 +194,8 @@ def convert_file(
     if not errors:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            start_kit(extra_extensions=(selected_backend.extension_name,))
-            output_url = asyncio.run(_run_converter_task(selected_backend, source_path, output_path, option_config))
+            start_kit(extra_extensions=(CONVERTER.extension_name,))
+            output_url = asyncio.run(_run_converter_task(CONVERTER, source_path, output_path, option_config))
             if Path(output_url).as_posix() != output_path.as_posix():
                 warnings.append(f"converter returned output URL: {output_url}")
         except Exception as exc:
@@ -220,10 +216,8 @@ def convert_file(
         source_path=str(source_path),
         output_path=str(output_path),
         source_file_type=detect_file_type(source_path),
-        requested_backend=backend,
-        selected_backend=selected_backend.name,
-        converter_extension=selected_backend.extension_name,
-        converter_module=selected_backend.module_name,
+        converter_extension=CONVERTER.extension_name,
+        converter_module=CONVERTER.module_name,
         converter_options=option_config,
         warnings=warnings,
         errors=errors,

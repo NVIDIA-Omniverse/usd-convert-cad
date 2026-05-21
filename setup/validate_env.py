@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
-from usd_convert_cad.formats import BACKENDS, ROUTES  # noqa: E402
+from usd_convert_cad.formats import CONVERTER, SUPPORTED_FORMATS  # noqa: E402
 from usd_convert_cad.kit_runtime import start_kit, shutdown_kit  # noqa: E402
 
 
@@ -52,20 +52,18 @@ def main() -> int:
         all_ok &= check("headless KitApp starts", False, str(exc))
         return 1
 
-    for backend in BACKENDS.values():
-        try:
-            importlib.import_module(backend.module_name)
-            all_ok &= check(f"{backend.module_name} importable", True)
-        except ImportError as exc:
-            all_ok &= check(f"{backend.module_name} importable", False, str(exc))
+    try:
+        importlib.import_module(CONVERTER.module_name)
+        all_ok &= check(f"{CONVERTER.module_name} importable", True)
+    except ImportError as exc:
+        all_ok &= check(f"{CONVERTER.module_name} importable", False, str(exc))
 
     shutdown_kit()
 
     print()
-    print("Routing table:")
-    for route in ROUTES:
-        alternatives = ", ".join(route.alternative_backends) or "None"
-        print(f"  {', '.join(route.file_types)} -> {route.default_backend} (alt: {alternatives})")
+    print("Supported formats:")
+    for file_format in SUPPORTED_FORMATS:
+        print(f"  {', '.join(file_format.file_types)}")
 
     print()
     print("Result:", "ready" if all_ok else "not ready")

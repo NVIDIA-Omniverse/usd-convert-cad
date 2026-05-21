@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
-from usd_convert_cad.formats import BACKENDS  # noqa: E402
+from usd_convert_cad.formats import CONVERTER  # noqa: E402
 from usd_convert_cad.kit_runtime import DEFAULT_EXTENSIONS, KIT_REGISTRY_URL, start_kit, shutdown_kit  # noqa: E402
 
 
@@ -33,17 +33,13 @@ def main() -> int:
 
     print("  Waiting for converter core modules...")
     deadline = time.monotonic() + 180
-    missing = set(BACKENDS)
-    while time.monotonic() < deadline and missing:
-        for name in list(missing):
-            try:
-                importlib.import_module(BACKENDS[name].module_name)
-                print(f"  [OK] {BACKENDS[name].module_name}")
-                missing.remove(name)
-            except ImportError:
-                pass
-
-        if missing:
+    importable = False
+    while time.monotonic() < deadline and not importable:
+        try:
+            importlib.import_module(CONVERTER.module_name)
+            print(f"  [OK] {CONVERTER.module_name}")
+            importable = True
+        except ImportError:
             try:
                 import omni.kit.app as kit_app  # noqa: PLC0415
 
@@ -54,14 +50,13 @@ def main() -> int:
 
     shutdown_kit()
 
-    if missing:
-        print("  [WARN] Some converter core modules were not importable:")
-        for name in sorted(missing):
-            print(f"    - {BACKENDS[name].module_name}")
+    if not importable:
+        print("  [WARN] Converter core module was not importable:")
+        print(f"    - {CONVERTER.module_name}")
         print("  Run setup/inspect_extension_docs.py after registry download to verify installed extension names.")
         return 1
 
-    print("  [OK] Converter core modules are importable.")
+    print("  [OK] Converter core module is importable.")
     return 0
 
 

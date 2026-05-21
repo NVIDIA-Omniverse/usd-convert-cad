@@ -17,7 +17,7 @@ Include enough detail for maintainers to reproduce or understand the issue:
 
 - Package version or commit.
 - Operating system and Python version. Python 3.12 is required.
-- Input CAD format, selected backend, and requested output format.
+- Input CAD format and requested output format.
 - Exact command or API call used.
 - JSON report path, relevant log output, or a short description of the
   unexpected behavior.
@@ -33,15 +33,15 @@ description of the problem being solved and the approach taken.
 Before submitting a pull request:
 
 - Run `python validate.py` after setup or runtime changes.
-- Smoke test `python convert.py --formats` for CLI, routing, or packaging
+- Smoke test `python convert.py --formats` for CLI, supported formats, or packaging
   changes.
-- Convert a small CAD sample when changing conversion behavior, backend
-  selection, converter options, reports, or Kit startup.
-- Update `README.md`, `.agents/skills/usd-convert-cad/SKILL.md`, or both when
+- Convert a small CAD sample when changing conversion behavior, converter
+  options, reports, or Kit startup.
+- Update `README.md`, `skills/usd-convert-cad/SKILL.md`, or both when
   behavior, options, supported formats, setup requirements, or external
   workflow contracts change.
 - Inspect installed converter extension docs with
-  `python setup/inspect_extension_docs.py` before changing backend-specific
+  `python setup/inspect_extension_docs.py` before changing converter-specific
   options or API assumptions.
 - Keep public APIs and report fields backwards compatible unless the pull
   request intentionally proposes a breaking change.
@@ -65,7 +65,7 @@ OMNI_KIT_ACCEPT_EULA=yes
 ```
 
 The first validation or conversion may need network access to the NVIDIA Kit
-extension registry. Some CAD formats or converter routes may also require
+extension registry. Some CAD formats or conversions may also require
 NVIDIA CAD Converter licensing.
 
 ## Building
@@ -89,23 +89,23 @@ Useful smoke tests:
 ```bash
 python validate.py
 python convert.py --formats
-python convert.py input.jt input.usd --backend auto --report cad-conversion-status.json
+python convert.py input.jt input.usd --report cad-conversion-status.json
 ```
 
 When a conversion fails, read the JSON report first, then inspect the relevant
-log output. Reports should preserve the selected backend, converter module,
+log output. Reports should preserve the converter module,
 options, warnings, errors, and pass/fail status.
 
 ## Repository Conventions
 
 - `convert.py`, `install.py`, and `validate.py` are repo-local wrappers and
   should remain the recommended external entry points.
-- `.agents/skills/usd-convert-cad/SKILL.md` is the canonical NVIDIA Agent Skill
+- `skills/usd-convert-cad/SKILL.md` is the canonical NVIDIA Agent Skill
   entrypoint. Keep the directory name aligned with the `name` frontmatter.
-- Local `.claude/skills` and `.codex/skills` compatibility links should point to
-  `.agents/skills`; do not maintain duplicate skill copies there.
+- Local agent compatibility links should point to `skills/`; do not maintain
+  duplicate skill copies in legacy skill directories.
 - `app/run_conversion.py` is the runtime entry point used by the wrappers.
-- `src/usd_convert_cad/formats.py` owns the routing table and supported suffixes.
+- `src/usd_convert_cad/formats.py` owns the supported format list and suffixes.
 - `src/usd_convert_cad/converter.py` owns option construction and converter task
   execution.
 - `src/usd_convert_cad/kit_runtime.py` must keep `omni.kit_app.KitApp` as the
@@ -172,7 +172,7 @@ involved.
 - Keep changes narrowly scoped and avoid unrelated formatting churn.
 - Add the SPDX header used by existing Python files to new Python files.
 - Add comments only where they clarify non-obvious Kit startup, converter
-  routing, conversion report, or USD behavior.
+  behavior, conversion report, or USD behavior.
 - Do not commit `.venv/`, `config.env`, `__pycache__/`, `*.pyc`, local
   Omniverse/Kit caches, `_conversion/`, generated reports, or large CAD assets.
 

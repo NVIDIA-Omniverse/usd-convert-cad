@@ -1,6 +1,6 @@
 ---
 name: usd-convert-cad
-description: Convert CAD files to OpenUSD with a headless Omniverse Kit Python app. Use when routing supported CAD files through the hoops_core converter extension.
+description: Convert supported CAD files to OpenUSD with a headless Omniverse Kit Python app.
 version: "0.1.0"
 author: NVIDIA Omniverse
 tags:
@@ -31,8 +31,8 @@ compatibility:
 Use this skill when a user asks to:
 
 - Convert supported CAD, 3D, or interchange files to OpenUSD with the repo-local headless Omniverse Kit app.
-- Route conversion through `omni.kit.converter.hoops_core` using the wrapper's format table and backend policy.
-- Call this repository from a higher-level Physical AI workflow instead of duplicating Kit startup, converter routing, or core converter API calls.
+- Convert supported CAD inputs using the wrapper's supported-format list and HOOPS option policy.
+- Call this repository from a higher-level Physical AI workflow instead of duplicating Kit startup, supported-format checks, or core converter API calls.
 - Discover documented HOOPS converter options from the installed Kit extension package before choosing `--option` overrides.
 
 Do not use this skill to substitute mesh converters, hand-authored USD, or unrelated tools for CAD conversion.
@@ -40,10 +40,10 @@ Do not use this skill to substitute mesh converters, hand-authored USD, or unrel
 ## Instructions
 
 1. Confirm the source file exists and detect the file type by extension.
-2. Select the backend using the routing table. Use `--backend auto` unless the user explicitly requests a supported HOOPS backend alias.
+2. Confirm the extension is listed under Supported Formats.
 3. Check setup state before conversion. If neither `config.env` nor the repo-local `.venv` Python exists, run `python install.py`, then `python validate.py`, then conversion.
 4. Invoke the root `convert.py` wrapper for external workflows. Pass an explicit `--report` path in the same directory as the requested output and prefer `--quiet` for non-interactive agent workflows.
-5. After conversion, read the JSON status report first. Treat the report status, generated USD path, selected backend, warnings, and errors as the primary contract.
+5. After conversion, read the JSON status report first. Treat the report status, generated USD path, converter module, warnings, and errors as the primary contract.
 6. If conversion succeeds, avoid reading verbose Kit logs unless the user asks for them. If conversion fails and the report is insufficient, inspect only the relevant tail of the log.
 7. For option-discovery questions, inspect the installed extension docs with `python setup/inspect_extension_docs.py`, then read the extension's `SKILL.md`, `README.md`, `Usage.md`, `Overview.md`, `extension.toml`, and examples before recommending overrides.
 
@@ -53,10 +53,10 @@ Recommended external caller contract:
 
 ```bash
 USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
-python "$USD_CONVERT_CAD_ROOT/convert.py" asset.jt asset.usd --backend auto --report cad-conversion-status.json
+python "$USD_CONVERT_CAD_ROOT/convert.py" asset.jt asset.usd --report cad-conversion-status.json
 ```
 
-The caller should read the JSON status report for the generated USD path, selected backend, warnings, errors, and pass/fail status before continuing to USD validation or SimReady workflows. When an output path is provided, generated files stay in the directory the caller specified. If the output path is omitted, the CLI writes the USD and report under an `_conversion/` directory next to the input file.
+The caller should read the JSON status report for the generated USD path, converter module, warnings, errors, and pass/fail status before continuing to USD validation or SimReady workflows. When an output path is provided, generated files stay in the directory the caller specified. If the output path is omitted, the CLI writes the USD and report under an `_conversion/` directory next to the input file.
 
 By default, this writes a JSON status report beside the output USD as `<output_stem>-<conversion_id>.json`. If no output path is provided, the output USD and report are written under an `_conversion/` directory next to the input file. The report includes `conversion_id` and `created_at_utc`.
 
@@ -78,45 +78,41 @@ PYTHON_EXE=<absolute path to repo .venv Python>
 OMNI_KIT_ACCEPT_EULA=yes
 ```
 
-The `.venv/` directory contains the Python 3.12 runtime dependencies, including `omniverse-kit` and the editable `usd-convert-cad` package. The `hoops_core` converter extension may be fetched by `setup/fetch_extensions.py` during install or by the first conversion and is cached in the local Kit/Omniverse cache outside this repo.
+The `.venv/` directory contains the Python 3.12 runtime dependencies, including `omniverse-kit` and the editable `usd-convert-cad` package. The HOOPS converter extension may be fetched by `setup/fetch_extensions.py` during install or by the first conversion and is cached in the local Kit/Omniverse cache outside this repo.
 
 `install.py` is intended to be idempotent: it should reuse an existing `.venv`, skip package installs that are already importable, refresh `config.env`, and check converter extensions before first conversion.
 
-## Routing Table
+## Supported Formats
 
-| File type | Default converter | Alternative converter | Notes |
-|---|---|---|---|
-| `.jt` | `omni.kit.converter.hoops_core` | None | JT route through HOOPS. |
-| `.dgn` | `omni.kit.converter.hoops_core` | None | DGN route through HOOPS. |
-| `.catpart`, `.catproduct`, `.cgr` | `omni.kit.converter.hoops_core` | None | CATIA V5 route; may require CAD converter licensing. |
-| `.3dxml` | `omni.kit.converter.hoops_core` | None | CATIA V6 / 3DExperience route; may require CAD converter licensing. |
-| `.ifc`, `.ifczip` | `omni.kit.converter.hoops_core` | None | IFC route. |
-| `.prt` | `omni.kit.converter.hoops_core` | None | Siemens NX or Creo part route; exact interpretation depends on file content. |
-| `.asm` | `omni.kit.converter.hoops_core` | None | Creo or Solid Edge assembly route; exact interpretation depends on file content. |
-| `.xmt`, `.x_t`, `.x_b`, `.xmt_txt` | `omni.kit.converter.hoops_core` | None | Parasolid route. |
-| `.sldprt`, `.sldasm` | `omni.kit.converter.hoops_core` | None | SolidWorks route; may require CAD converter licensing. |
-| `.stl` | `omni.kit.converter.hoops_core` | None | STL route through HOOPS when using this CAD wrapper. |
-| `.ipt`, `.iam` | `omni.kit.converter.hoops_core` | None | Autodesk Inventor route; may require CAD converter licensing. |
-| `.dwg`, `.dxf` | `omni.kit.converter.hoops_core` | None | AutoCAD 3D route. |
-| `.rvt`, `.rfa` | `omni.kit.converter.hoops_core` | None | Revit route; may require CAD converter licensing. |
-| `.par`, `.pwd`, `.psm` | `omni.kit.converter.hoops_core` | None | Solid Edge route; may require CAD converter licensing. |
-| `.stp`, `.step`, `.igs`, `.iges` | `omni.kit.converter.hoops_core` | None | STEP / IGES route. |
-| `.3dm` | `omni.kit.converter.hoops_core` | None | Rhino route. |
-| `.dae` | `omni.kit.converter.hoops_core` | None | Collada route. |
-| `.fbx` | `omni.kit.converter.hoops_core` | None | FBX route. |
-| `.obj` | `omni.kit.converter.hoops_core` | None | OBJ route. |
-| `.3ds` | `omni.kit.converter.hoops_core` | None | Autodesk 3DS route. |
-| `.3mf` | `omni.kit.converter.hoops_core` | None | 3MF route. |
-| `.gltf`, `.glb` | `omni.kit.converter.hoops_core` | None | glTF route. |
-| `.sat`, `.sab` | `omni.kit.converter.hoops_core` | None | ACIS route. |
+| File type | Notes |
+|---|---|
+| `.jt` | JT input. |
+| `.dgn` | DGN input. |
+| `.catpart`, `.catproduct`, `.cgr` | CATIA V5 input; may require CAD converter licensing. |
+| `.3dxml` | CATIA V6 / 3DExperience input; may require CAD converter licensing. |
+| `.ifc`, `.ifczip` | IFC input. |
+| `.prt` | Siemens NX or Creo part input; exact interpretation depends on file content. |
+| `.asm` | Creo or Solid Edge assembly input; exact interpretation depends on file content. |
+| `.xmt`, `.x_t`, `.x_b`, `.xmt_txt` | Parasolid input. |
+| `.sldprt`, `.sldasm` | SolidWorks input; may require CAD converter licensing. |
+| `.stl` | STL input. |
+| `.ipt`, `.iam` | Autodesk Inventor input; may require CAD converter licensing. |
+| `.dwg`, `.dxf` | AutoCAD 3D input. |
+| `.rvt`, `.rfa` | Revit input; may require CAD converter licensing. |
+| `.par`, `.pwd`, `.psm` | Solid Edge input; may require CAD converter licensing. |
+| `.stp`, `.step`, `.igs`, `.iges` | STEP / IGES input. |
+| `.3dm` | Rhino input. |
+| `.dae` | Collada input. |
+| `.fbx` | FBX input. |
+| `.obj` | OBJ input. |
+| `.3ds` | Autodesk 3DS input. |
+| `.3mf` | 3MF input. |
+| `.gltf`, `.glb` | glTF input. |
+| `.sat`, `.sab` | ACIS input. |
 
-## Routing Policy
+## Converter Policy
 
-Use `--backend auto` unless the user explicitly requests a converter. In `auto`, use the default converter from the routing table.
-
-Forced backends are allowed only when the routing table lists the requested backend as either the default or alternative converter for that file type. Since this wrapper supports only `hoops_core`, reject any other converter backend. Accepted HOOPS backend names are `hoops_core`, `hoops`, and `omni.kit.converter.hoops_core`.
-
-Do not substitute mesh converters, hand-authored USD, or unrelated tools for CAD conversion.
+Use the repo-local `convert.py` wrapper. Do not expose converter selection to callers; this app has one supported converter core. Do not substitute mesh converters, hand-authored USD, or unrelated tools for CAD conversion.
 
 ## Commands
 
@@ -130,33 +126,26 @@ python convert.py --formats
 
 `validate.py` prints a final `[OK] Environment ready.` line and exits 0 on success, or `[FAIL] Environment not ready.` and a non-zero exit on failure. Agents should rely on the exit code as the authoritative contract; the Kit extension startup banner above the summary is informational only.
 
-Convert with automatic routing:
+Convert with the default converter:
 
 ```bash
-python convert.py asset.jt asset.usd --backend auto
+python convert.py asset.jt asset.usd
 ```
 
 Low-output agent conversion:
 
 ```bash
-python convert.py asset.jt asset.usd --backend auto --report cad-conversion-status.json --quiet
-python convert.py asset.jt asset.usd --backend auto --report cad-conversion-status.json --quiet --log cad-conversion.log
-```
-
-Force a supported backend:
-
-```bash
-python convert.py asset.jt asset.usd --backend hoops_core
-python convert.py site.dgn site.usd --backend hoops_core
+python convert.py asset.jt asset.usd --report cad-conversion-status.json --quiet
+python convert.py asset.jt asset.usd --report cad-conversion-status.json --quiet --log cad-conversion.log
 ```
 
 Override documented converter options:
 
 ```bash
-python convert.py asset.jt asset.usd --backend hoops_core --option tessLOD=4
-python convert.py site.dgn site.usd --backend hoops_core --option tessLOD=4
-python convert.py assembly.step assembly.usd --backend hoops_core --option tessLOD=4
-python convert.py assembly.step assembly.usd --backend hoops_core --no-materials --keep-hidden
+python convert.py asset.jt asset.usd --option tessLOD=4
+python convert.py site.dgn site.usd --option tessLOD=4
+python convert.py assembly.step assembly.usd --option tessLOD=4
+python convert.py assembly.step assembly.usd --no-materials --keep-hidden
 ```
 
 ## Shell Invocation
@@ -167,9 +156,9 @@ Use the root `convert.py` wrapper for external workflows. It accepts positional 
 
 | Shell | Invocation pattern | Notes |
 |---|---|---|
-| bash / sh | `python /path/to/usd-convert-cad/convert.py input.jt input.usd --backend auto` | Check `$?` after the call. |
-| PowerShell | `python C:/path/to/usd-convert-cad/convert.py input.jt input.usd --backend auto` | Check `$LASTEXITCODE` after the call. |
-| cmd.exe | `python C:\path\to\usd-convert-cad\convert.py input.jt input.usd --backend auto` | Check `%ERRORLEVEL%` after the call. |
+| bash / sh | `python /path/to/usd-convert-cad/convert.py input.jt input.usd` | Check `$?` after the call. |
+| PowerShell | `python C:/path/to/usd-convert-cad/convert.py input.jt input.usd` | Check `$LASTEXITCODE` after the call. |
+| cmd.exe | `python C:\path\to\usd-convert-cad\convert.py input.jt input.usd` | Check `%ERRORLEVEL%` after the call. |
 
 
 When invoking via an external tool runner, pass the full path to the root `convert.py` wrapper and capture stdout and stderr together. The wrappers use absolute paths for repo-local internals; relative conversion inputs, outputs, reports, and logs are resolved by the caller's working directory.
@@ -188,11 +177,11 @@ For non-interactive agent workflows, always pass an explicit `--report` path in 
 
 ## Converter Options
 
-The wrapper creates the selected backend's documented option class and passes `options.toArgs()` to `create_converter_task(...)`.
+The wrapper creates the HOOPS `HoopsOptions` option class and passes `options.toArgs()` to `create_converter_task(...)`.
 
 | Backend | Option class | Success contract |
 |---|---|---|
-| `hoops_core` | `HoopsOptions` | `output_url, status`; pass when `status.error_code == 0` and `output_url` is non-empty. |
+| HOOPS converter core | `HoopsOptions` | `output_url, status`; pass when `status.error_code == 0` and `output_url` is non-empty. |
 
 Materials are enabled by default with `useMaterials=true`. Pass `--no-materials` only when material conversion should be disabled.
 
@@ -233,9 +222,7 @@ Conversion passes only when `status.error_code == 0`, `output_url` is non-empty,
 
 ## Limitations
 
-- This wrapper supports only `hoops_core` conversion backends.
-- Forced backends are rejected unless the routing table lists the requested backend as valid for the source file type.
-- Some CAD formats may require CAD converter licensing even when the route is supported.
+- This wrapper supports one converter core and does not expose converter selection.
 - `.prt` and `.asm` file interpretation depends on the source content because multiple CAD systems use those extensions.
 - The first install or first conversion may need network access to fetch Omniverse Kit packages or converter extensions.
 
@@ -246,8 +233,7 @@ Report a blocked conversion when:
 - Python is not 3.12.
 - `omniverse-kit` is missing.
 - The required converter core module cannot be imported.
-- The source file extension is not in the routing table.
-- The requested backend is not valid for the source file type.
+- The source file extension is not listed under Supported Formats.
 - The converter task fails or does not produce the expected output.
 
 If `config.env` points to a missing interpreter and `.venv` is also missing, treat `config.env` as stale. Run `python install.py`, then `python validate.py`, then conversion.
@@ -257,5 +243,5 @@ If setup or conversion fails and `--report` was supplied, preserve or emit a blo
 ## References
 
 - `README.md` for repository overview and user-facing setup notes.
-- `CONTRIBUTING.md` for maintainer expectations and routing table update policy.
+- `CONTRIBUTING.md` for maintainer expectations and supported-format update policy.
 - `setup/inspect_extension_docs.py` for inspecting installed HOOPS converter extension documentation.

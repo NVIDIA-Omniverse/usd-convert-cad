@@ -5,24 +5,24 @@
 
 Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and the HOOPS CAD converter core extension pulled from the Kit registry.
 
-This repository is a small reference app and NVIDIA Agent Skill for routing supported CAD files through one Kit converter core:
+This repository is a small reference app and NVIDIA Agent Skill for converting supported CAD files through the HOOPS Kit converter core:
 
-- `omni.kit.converter.hoops_core` for JT, DGN, general CAD, and neutral CAD formats.
+- HOOPS converter core for JT, DGN, general CAD, and neutral CAD formats.
 
-The goal is to keep the routing policy visible in code and in `.agents/skills/usd-convert-cad/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
+The goal is to keep the supported-format policy visible in code and in `skills/usd-convert-cad/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
 
 ## Role In Physical AI Workflows
 
-`usd-convert-cad` is intended to be its own repository and conversion backend. Higher-level agent workflow repositories, such as `physical-ai-skill-hub-dev`, should not reimplement Kit startup or CAD converter calls. They should locate this checkout, call its CLI, consume its report, and then continue with validation, material assignment, physics authoring, or SimReady conformance.
+`usd-convert-cad` is intended to be its own repository and conversion app. Higher-level agent workflow repositories, such as `physical-ai-skill-hub-dev`, should not reimplement Kit startup or CAD converter calls. They should locate this checkout, call its CLI, consume its report, and then continue with validation, material assignment, physics authoring, or SimReady conformance.
 
 Recommended integration contract:
 
 ```bash
 USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
-python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "model.usd" --backend auto --report "cad-conversion-status.json"
+python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "model.usd" --report "cad-conversion-status.json"
 ```
 
-The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, selected backend, converter module, converter options, warnings, errors, and pass/fail status.
+The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, converter module, converter options, warnings, errors, and pass/fail status.
 
 When an output path is provided, generated files stay in the directory the caller specified. If `--report` is omitted, the CLI writes a timestamped report beside the output USD:
 
@@ -73,25 +73,22 @@ python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json
 
 `--quiet` and `--log` are available on the root `convert.py` wrapper for external automation. The internal `app/run_conversion.py` command uses `--input` / `--output` and supports `--formats`, `--report`, `--markdown-report`, and `--shutdown`.
 
-## Backend Selection
+## Converter Core
 
-By default, `--backend auto` follows the routing table in `.agents/skills/usd-convert-cad/SKILL.md`. All supported formats route through `omni.kit.converter.hoops_core`.
+This wrapper uses the HOOPS converter core for every supported format listed in `skills/usd-convert-cad/SKILL.md`. The CLI does not expose converter selection.
 
 ```bash
-python convert.py "model.jt" "model.usd" --backend auto
-python convert.py "model.jt" "model.usd" --backend hoops_core
-python convert.py "site.dgn" "site.usd" --backend hoops_core
+python convert.py "model.jt" "model.usd"
+python convert.py "site.dgn" "site.usd"
 ```
-
-Use `--backend auto` for normal conversions. `--backend hoops_core` is accepted when you want to be explicit; `hoops` and `omni.kit.converter.hoops_core` are accepted aliases. Other converter cores are not supported by this wrapper.
 
 ## Converter Options
 
-The wrapper creates the documented option class for the selected backend and passes `options.toArgs()` to `create_converter_task(...)`:
+The wrapper creates the documented HOOPS option class and passes `options.toArgs()` to `create_converter_task(...)`:
 
 | Backend | Option class |
 |---|---|
-| `hoops_core` | `HoopsOptions` |
+| HOOPS converter core | `HoopsOptions` |
 
 The wrapper starts from these HOOPS defaults before applying convenience flags and `--option` overrides:
 
@@ -113,10 +110,10 @@ The CLI exposes a small set of HOOPS convenience flags:
 Pass additional HOOPS overrides with repeated `--option key=value` arguments. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
 
 ```bash
-python convert.py "model.jt" "model.usd" --backend hoops_core --option tessLOD=4
-python convert.py "site.dgn" "site.usd" --backend hoops_core --option tessLOD=4
-python convert.py "assembly.step" "assembly.usd" --backend hoops_core --option tessLOD=4
-python convert.py "assembly.step" "assembly.usd" --backend hoops_core --no-materials --keep-hidden
+python convert.py "model.jt" "model.usd" --option tessLOD=4
+python convert.py "site.dgn" "site.usd" --option tessLOD=4
+python convert.py "assembly.step" "assembly.usd" --option tessLOD=4
+python convert.py "assembly.step" "assembly.usd" --no-materials --keep-hidden
 ```
 
 Use the installed extension docs to confirm option names and enum values before passing overrides.
