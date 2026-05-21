@@ -13,8 +13,6 @@ KIT_REGISTRY_URL = "https://ovextensionsprod.blob.core.windows.net/exts/kit/prod
 DEFAULT_EXTENSIONS = (
     "omni.kit.registry.nucleus",
     "omni.kit.converter.hoops_core",
-    "omni.kit.converter.jt_core",
-    "omni.kit.converter.dgn_core",
 )
 BASE_EXTENSIONS = ("omni.kit.registry.nucleus",)
 

@@ -30,28 +30,6 @@ class RouteInfo:
 
 
 BACKENDS: dict[str, BackendInfo] = {
-    "jt_core": BackendInfo(
-        name="jt_core",
-        extension_name="omni.kit.converter.jt_core",
-        module_name="omni.kit.converter.jt_core",
-        options_class_name="JTConverterOptions",
-        default_options={
-            "instancingStyle": 2,
-            "layerFilterStyle": 1,
-            "materialType": 1,
-        },
-    ),
-    "dgn_core": BackendInfo(
-        name="dgn_core",
-        extension_name="omni.kit.converter.dgn_core",
-        module_name="omni.kit.converter.dgn_core",
-        options_class_name="OdaDgnOptions",
-        default_options={
-            "meshConversionStyle": 2,
-            "curveConversionStyle": 0,
-            "importAttributesByList": True,
-        },
-    ),
     "hoops_core": BackendInfo(
         name="hoops_core",
         extension_name="omni.kit.converter.hoops_core",
@@ -69,8 +47,8 @@ BACKENDS: dict[str, BackendInfo] = {
 
 
 ROUTES: tuple[RouteInfo, ...] = (
-    RouteInfo((".jt",), "jt_core", ("hoops_core",), "JT route."),
-    RouteInfo((".dgn",), "dgn_core", ("hoops_core",), "DGN route."),
+    RouteInfo((".jt",), "hoops_core", (), "JT route through HOOPS."),
+    RouteInfo((".dgn",), "hoops_core", (), "DGN route through HOOPS."),
     RouteInfo((".catpart", ".catproduct", ".cgr"), "hoops_core", (), "CATIA V5 route."),
     RouteInfo((".3dxml",), "hoops_core", (), "CATIA V6 / 3DExperience route."),
     RouteInfo((".ifc", ".ifczip"), "hoops_core", (), "IFC route."),
@@ -119,11 +97,7 @@ def normalize_backend(backend: str) -> str:
     value = backend.strip().lower()
     aliases = {
         "auto": "auto",
-        "jt": "jt_core",
-        "dgn": "dgn_core",
         "hoops": "hoops_core",
-        "omni.kit.converter.jt_core": "jt_core",
-        "omni.kit.converter.dgn_core": "dgn_core",
         "omni.kit.converter.hoops_core": "hoops_core",
     }
     return aliases.get(value, value)

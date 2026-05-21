@@ -32,11 +32,7 @@ def build_option_config(
     backend: BackendInfo,
     *,
     no_materials: bool = False,
-    single_mesh: bool = False,
-    no_meter_units: bool = False,
     keep_hidden: bool = False,
-    tessellation_chord: float | None = None,
-    tessellation_angle: float | None = None,
     extra_options: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Build the config dictionary passed through the backend option class."""
@@ -44,47 +40,11 @@ def build_option_config(
     warnings: list[str] = []
 
     if no_materials:
-        if backend.name in {"hoops_core", "dgn_core"}:
-            options["useMaterials"] = False
-        elif backend.name == "jt_core":
-            options["materialType"] = 0
-
-    if single_mesh:
-        if backend.name == "jt_core":
-            options["flatten"] = True
-        else:
-            warnings.append(f"--single-mesh has no generic mapping for {backend.name}; pass a backend-specific --option instead")
-
-    if no_meter_units:
-        warnings.append(f"--no-meter-units has no generic mapping for {backend.name}; pass a backend-specific --option instead")
+        options["useMaterials"] = False
 
     if keep_hidden:
-        if backend.name == "hoops_core":
-            options["filterStyle"] = 0
-            options["omitHiddenOnLoad"] = False
-        elif backend.name == "jt_core":
-            options["layerFilterStyle"] = 0
-        elif backend.name == "dgn_core":
-            options["levelFilterStyle"] = 0
-            options["convertHidden"] = True
-
-    if tessellation_chord is not None:
-        if backend.name == "jt_core":
-            options["overrideTessellationParameters"] = True
-            options["fallbackTessParamChordal"] = tessellation_chord
-        elif backend.name == "dgn_core":
-            options["surfaceTolerance"] = tessellation_chord
-        else:
-            warnings.append("--tessellation-chord is not a HOOPS option; use --option tessLOD=<0-4> for hoops_core")
-
-    if tessellation_angle is not None:
-        if backend.name == "jt_core":
-            options["overrideTessellationParameters"] = True
-            options["fallbackTessParamAngular"] = tessellation_angle
-        elif backend.name == "dgn_core":
-            options["normalTolerance"] = tessellation_angle
-        else:
-            warnings.append("--tessellation-angle is not a HOOPS option; use --option tessLOD=<0-4> for hoops_core")
+        options["filterStyle"] = 0
+        options["omitHiddenOnLoad"] = False
 
     if extra_options:
         options.update({key: _coerce_option_value(value) for key, value in extra_options.items()})
@@ -188,11 +148,7 @@ def convert_file(
     *,
     backend: str = "auto",
     no_materials: bool = False,
-    single_mesh: bool = False,
-    no_meter_units: bool = False,
     keep_hidden: bool = False,
-    tessellation_chord: float | None = None,
-    tessellation_angle: float | None = None,
     extra_options: dict[str, str] | None = None,
     shutdown: bool = False,
 ) -> ConversionReport:
@@ -228,11 +184,7 @@ def convert_file(
     option_config, option_warnings = build_option_config(
         selected_backend,
         no_materials=no_materials,
-        single_mesh=single_mesh,
-        no_meter_units=no_meter_units,
         keep_hidden=keep_hidden,
-        tessellation_chord=tessellation_chord,
-        tessellation_angle=tessellation_angle,
         extra_options=extra_options,
     )
     warnings.extend(option_warnings)

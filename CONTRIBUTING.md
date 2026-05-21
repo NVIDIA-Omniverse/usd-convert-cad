@@ -6,7 +6,7 @@
 Thank you for your interest in contributing to `usd-convert-cad`.
 
 This repository is a small Python reference app for headless CAD-to-USD
-conversion through Omniverse Kit converter core extensions. Before opening a
+conversion through the Omniverse Kit HOOPS converter core extension. Before opening a
 pull request, keep the change focused, document user-visible behavior, and run
 the validation or smoke tests that match the code you changed.
 

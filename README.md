@@ -3,13 +3,11 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0 -->
 
-Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and CAD converter core extensions pulled from the Kit registry.
+Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and the HOOPS CAD converter core extension pulled from the Kit registry.
 
-This repository is a small reference app and NVIDIA Agent Skill for routing CAD files to explicit Kit converter cores:
+This repository is a small reference app and NVIDIA Agent Skill for routing supported CAD files through one Kit converter core:
 
-- `omni.kit.converter.jt_core` for JT files.
-- `omni.kit.converter.dgn_core` for DGN files.
-- `omni.kit.converter.hoops_core` for general CAD and neutral CAD formats.
+- `omni.kit.converter.hoops_core` for JT, DGN, general CAD, and neutral CAD formats.
 
 The goal is to keep the routing policy visible in code and in `.agents/skills/usd-convert-cad/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
 
@@ -65,18 +63,27 @@ The equivalent Python command is:
 
 On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Linux, it is `.venv/bin/python`.
 
+Useful wrapper commands:
+
+```bash
+python convert.py --formats
+python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json" --quiet
+python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json" --quiet --log "part.log"
+```
+
+`--quiet` and `--log` are available on the root `convert.py` wrapper for external automation. The internal `app/run_conversion.py` command uses `--input` / `--output` and supports `--formats`, `--report`, `--markdown-report`, and `--shutdown`.
+
 ## Backend Selection
 
-By default, `--backend auto` follows the routing table in `.agents/skills/usd-convert-cad/SKILL.md`.
+By default, `--backend auto` follows the routing table in `.agents/skills/usd-convert-cad/SKILL.md`. All supported formats route through `omni.kit.converter.hoops_core`.
 
 ```bash
 python convert.py "model.jt" "model.usd" --backend auto
-python convert.py "model.jt" "model.usd" --backend jt_core
 python convert.py "model.jt" "model.usd" --backend hoops_core
-python convert.py "site.dgn" "site.usd" --backend dgn_core
+python convert.py "site.dgn" "site.usd" --backend hoops_core
 ```
 
-Use a forced backend only when the routing table allows it or when you are intentionally testing converter behavior.
+Use `--backend auto` for normal conversions. `--backend hoops_core` is accepted when you want to be explicit; `hoops` and `omni.kit.converter.hoops_core` are accepted aliases. Other converter cores are not supported by this wrapper.
 
 ## Converter Options
 
@@ -84,30 +91,45 @@ The wrapper creates the documented option class for the selected backend and pas
 
 | Backend | Option class |
 |---|---|
-| `jt_core` | `JTConverterOptions` |
-| `dgn_core` | `OdaDgnOptions` |
 | `hoops_core` | `HoopsOptions` |
 
-Pass backend-specific overrides with `--option key=value`. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
+The wrapper starts from these HOOPS defaults before applying convenience flags and `--option` overrides:
+
+- `instancingStyle=2`
+- `compositionStyle=0`
+- `filterStyle=1`
+- `tessLOD=2`
+- `useMaterials=true`
+
+Materials are enabled by default with `useMaterials=true`. Pass `--no-materials` or `--option useMaterials=false` only when material conversion should be disabled.
+
+The CLI exposes a small set of HOOPS convenience flags:
+
+- `--fine` sets `tessLOD=4` unless `--option tessLOD=...` is supplied.
+- `--coarse` sets `tessLOD=0` unless `--option tessLOD=...` is supplied.
+- `--no-materials` sets `useMaterials=false`.
+- `--keep-hidden` sets `filterStyle=0` and `omitHiddenOnLoad=false`.
+
+Pass additional HOOPS overrides with repeated `--option key=value` arguments. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
 
 ```bash
-python convert.py "model.jt" "model.usd" --backend jt_core --option instancingStyle=0
-python convert.py "model.jt" "model.usd" --backend jt_core --option flatten=true
-python convert.py "site.dgn" "site.usd" --backend dgn_core --option curveConversionStyle=2
+python convert.py "model.jt" "model.usd" --backend hoops_core --option tessLOD=4
+python convert.py "site.dgn" "site.usd" --backend hoops_core --option tessLOD=4
 python convert.py "assembly.step" "assembly.usd" --backend hoops_core --option tessLOD=4
+python convert.py "assembly.step" "assembly.usd" --backend hoops_core --no-materials --keep-hidden
 ```
 
 Use the installed extension docs to confirm option names and enum values before passing overrides.
 
 ## Inspect Installed Converter Docs
 
-The Kit registry packages are the source of truth for detailed converter API and options. After the extensions are downloaded, inspect local extension docs with:
+The Kit registry packages are the source of truth for detailed converter API and options. After the extensions are downloaded, inspect local extension docs with the repo-local runtime:
 
 ```bash
-.venv/bin/python setup/inspect_extension_docs.py
+python setup/inspect_extension_docs.py
 ```
 
-Look for each extension's `SKILL.md`, `README.md`, `extension.toml`, and examples before adding or changing converter options.
+Look for the HOOPS extension's `SKILL.md`, `README.md`, `Usage.md`, `Overview.md`, `extension.toml`, and examples before adding or changing converter options.
 
 ## License And Contributions
 
@@ -164,5 +186,5 @@ usd-convert-cad/
 - `omni.kit_app.KitApp` must be the first Omniverse import in the process.
 - The first conversion can take longer because Kit downloads converter extensions from the registry.
 - If a core module import fails, run `python validate.py` and inspect the downloaded extension packages before changing converter code.
-- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. External workflows should call `python convert.py` for the repo-local wrapper behavior.
+- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. The console script uses `--input` / `--output` and does not support `convert.py`'s positional paths, `--quiet`, or `--log`; external workflows should call `python convert.py` for the repo-local wrapper behavior.
 - `.agents/skills/` is the canonical skill path. Local `.claude/skills` and `.codex/skills` compatibility links can point to it for agent-specific discovery.

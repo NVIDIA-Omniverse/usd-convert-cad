@@ -16,7 +16,7 @@ sys.path.insert(0, str(SRC_ROOT))
 from usd_convert_cad.formats import BACKENDS  # noqa: E402
 
 
-DOC_NAMES = {"SKILL.md", "README.md", "readme.md", "extension.toml"}
+DOC_NAMES = {"SKILL.md", "README.md", "Usage.md", "Overview.md", "extension.toml"}
 EXAMPLE_PARTS = {"example", "examples", "samples", "scripts"}
 
 
@@ -44,7 +44,7 @@ def candidate_roots() -> list[Path]:
 
 def looks_relevant(path: Path) -> bool:
     path_text = str(path).lower()
-    tokens = ["converter", "hoops", "jt", "dgn"]
+    tokens = ["hoops", "hoops_core"]
     return any(token in path_text for token in tokens)
 
 

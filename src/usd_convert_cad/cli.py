@@ -46,22 +46,18 @@ def default_output_path(input_path: Path) -> Path:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Convert CAD files to USD with explicit Kit converter core routing.")
+    parser = argparse.ArgumentParser(description="Convert CAD files to USD with the HOOPS Kit converter core.")
     parser.add_argument("--input", type=Path, help="Input CAD file path.")
     parser.add_argument(
         "--output",
         type=Path,
         help="Output .usd, .usda, .usdc, or .usdz path. Defaults to <input_dir>/_conversion/<input>.usd.",
     )
-    parser.add_argument("--backend", default="auto", help="auto, jt_core, dgn_core, or hoops_core.")
-    parser.add_argument("--fine", action="store_true", help="Use dChordHeight=0.001 and dAngleTolerance=10.")
-    parser.add_argument("--coarse", action="store_true", help="Use dChordHeight=0.1 and dAngleTolerance=45.")
-    parser.add_argument("--tessellation-chord", type=float, default=None)
-    parser.add_argument("--tessellation-angle", type=float, default=None)
-    parser.add_argument("--no-materials", action="store_true")
-    parser.add_argument("--single-mesh", action="store_true")
-    parser.add_argument("--no-meter-units", action="store_true")
-    parser.add_argument("--keep-hidden", action="store_true")
+    parser.add_argument("--backend", default="auto", help="auto, hoops_core, hoops, or omni.kit.converter.hoops_core.")
+    parser.add_argument("--fine", action="store_true", help="Use HOOPS tessLOD=4 unless --option tessLOD=... is supplied.")
+    parser.add_argument("--coarse", action="store_true", help="Use HOOPS tessLOD=0 unless --option tessLOD=... is supplied.")
+    parser.add_argument("--no-materials", action="store_true", help="Disable material conversion with HOOPS useMaterials=false.")
+    parser.add_argument("--keep-hidden", action="store_true", help="Keep hidden source entities when supported by HOOPS.")
     parser.add_argument("--option", action="append", default=[], metavar="KEY=VALUE", help="Pass a converter-specific option.")
     parser.add_argument(
         "--report",
@@ -92,30 +88,22 @@ def main(argv: list[str] | None = None) -> int:
     if args.fine and args.coarse:
         parser.error("--fine and --coarse are mutually exclusive")
 
-    chord = args.tessellation_chord
-    angle = args.tessellation_angle
-    if args.fine:
-        chord = 0.001
-        angle = 10.0
-    elif args.coarse:
-        chord = 0.1
-        angle = 45.0
-
     try:
         extra_options = _parse_option(args.option)
     except argparse.ArgumentTypeError as exc:
         parser.error(str(exc))
+
+    if args.fine:
+        extra_options.setdefault("tessLOD", "4")
+    elif args.coarse:
+        extra_options.setdefault("tessLOD", "0")
 
     report = convert_file(
         args.input,
         output,
         backend=args.backend,
         no_materials=args.no_materials,
-        single_mesh=args.single_mesh,
-        no_meter_units=args.no_meter_units,
         keep_hidden=args.keep_hidden,
-        tessellation_chord=chord,
-        tessellation_angle=angle,
         extra_options=extra_options,
         shutdown=args.shutdown,
     )
