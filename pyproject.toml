@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 [project]
 name = "usd-convert-cad"
 version = "0.1.0"
-description = "Headless Omniverse Kit CAD to USD conversion using explicit JT, DGN, and HOOPS converter cores."
+description = "Headless Omniverse Kit CAD to USD conversion using the HOOPS converter core."
 license = { file = "LICENSE" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -41,5 +41,5 @@ include = [
     "/app",
     "/setup",
     "/src",
-    "/.agents/skills/usd-convert-cad/SKILL.md",
+    "/skills/omniverse-cad-to-usd/SKILL.md",
 ]

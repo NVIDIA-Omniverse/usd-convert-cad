@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 
 from usd_convert_cad.converter import convert_file
-from usd_convert_cad.formats import ROUTES, supported_suffixes
+from usd_convert_cad.formats import SUPPORTED_FORMATS, supported_suffixes
 from usd_convert_cad.report import write_report
 
 
@@ -27,12 +27,11 @@ def _parse_option(values: list[str]) -> dict[str, str]:
 
 def print_formats() -> None:
     print()
-    print(f"{'File type':<36} {'Default':<14} {'Alternative'}")
+    print(f"{'File type':<36} Notes")
     print("-" * 72)
-    for route in ROUTES:
-        file_types = ", ".join(route.file_types)
-        alternatives = ", ".join(route.alternative_backends) or "None"
-        print(f"{file_types:<36} {route.default_backend:<14} {alternatives}")
+    for file_format in SUPPORTED_FORMATS:
+        file_types = ", ".join(file_format.file_types)
+        print(f"{file_types:<36} {file_format.notes}")
     print()
 
 
@@ -46,22 +45,17 @@ def default_output_path(input_path: Path) -> Path:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Convert CAD files to USD with explicit Kit converter core routing.")
+    parser = argparse.ArgumentParser(description="Convert CAD files to USD with the HOOPS Kit converter core.")
     parser.add_argument("--input", type=Path, help="Input CAD file path.")
     parser.add_argument(
         "--output",
         type=Path,
         help="Output .usd, .usda, .usdc, or .usdz path. Defaults to <input_dir>/_conversion/<input>.usd.",
     )
-    parser.add_argument("--backend", default="auto", help="auto, jt_core, dgn_core, or hoops_core.")
-    parser.add_argument("--fine", action="store_true", help="Use dChordHeight=0.001 and dAngleTolerance=10.")
-    parser.add_argument("--coarse", action="store_true", help="Use dChordHeight=0.1 and dAngleTolerance=45.")
-    parser.add_argument("--tessellation-chord", type=float, default=None)
-    parser.add_argument("--tessellation-angle", type=float, default=None)
-    parser.add_argument("--no-materials", action="store_true")
-    parser.add_argument("--single-mesh", action="store_true")
-    parser.add_argument("--no-meter-units", action="store_true")
-    parser.add_argument("--keep-hidden", action="store_true")
+    parser.add_argument("--fine", action="store_true", help="Use HOOPS tessLOD=4 unless --option tessLOD=... is supplied.")
+    parser.add_argument("--coarse", action="store_true", help="Use HOOPS tessLOD=0 unless --option tessLOD=... is supplied.")
+    parser.add_argument("--no-materials", action="store_true", help="Disable material conversion with HOOPS useMaterials=false.")
+    parser.add_argument("--keep-hidden", action="store_true", help="Keep hidden source entities when supported by HOOPS.")
     parser.add_argument("--option", action="append", default=[], metavar="KEY=VALUE", help="Pass a converter-specific option.")
     parser.add_argument(
         "--report",
@@ -69,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write JSON conversion report. Defaults beside the output USD.",
     )
     parser.add_argument("--markdown-report", type=Path, help="Write Markdown conversion report.")
-    parser.add_argument("--formats", action="store_true", help="List supported file types and routing.")
+    parser.add_argument("--formats", action="store_true", help="List supported file types.")
     parser.add_argument("--shutdown", action="store_true", help="Shut down Kit after this conversion.")
     return parser
 
@@ -92,30 +86,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.fine and args.coarse:
         parser.error("--fine and --coarse are mutually exclusive")
 
-    chord = args.tessellation_chord
-    angle = args.tessellation_angle
-    if args.fine:
-        chord = 0.001
-        angle = 10.0
-    elif args.coarse:
-        chord = 0.1
-        angle = 45.0
-
     try:
         extra_options = _parse_option(args.option)
     except argparse.ArgumentTypeError as exc:
         parser.error(str(exc))
 
+    if args.fine:
+        extra_options.setdefault("tessLOD", "4")
+    elif args.coarse:
+        extra_options.setdefault("tessLOD", "0")
+
     report = convert_file(
         args.input,
         output,
-        backend=args.backend,
         no_materials=args.no_materials,
-        single_mesh=args.single_mesh,
-        no_meter_units=args.no_meter_units,
         keep_hidden=args.keep_hidden,
-        tessellation_chord=chord,
-        tessellation_angle=angle,
         extra_options=extra_options,
         shutdown=args.shutdown,
     )
@@ -123,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     write_report(report, report_path, args.markdown_report)
 
     if report.passed:
-        print(f"[OK] {report.source_path} -> {report.output_path} via {report.selected_backend}")
+        print(f"[OK] {report.source_path} -> {report.output_path}")
         print(f"Report: {report_path}")
         return 0
 

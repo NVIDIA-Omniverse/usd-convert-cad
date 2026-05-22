@@ -19,7 +19,6 @@ def utc_timestamp() -> str:
 def make_conversion_id(
     source_path: str,
     output_path: str,
-    requested_backend: str,
     *,
     created_at_utc: str,
 ) -> str:
@@ -27,7 +26,6 @@ def make_conversion_id(
         "created_at_utc": created_at_utc,
         "source_path": source_path,
         "output_path": output_path,
-        "requested_backend": requested_backend,
     }
     source = Path(source_path)
     if source.exists():
@@ -45,8 +43,6 @@ class ConversionReport:
     source_path: str
     output_path: str
     source_file_type: str
-    requested_backend: str
-    selected_backend: str
     converter_extension: str
     converter_module: str
     converter_options: dict[str, Any] = field(default_factory=dict)
@@ -65,8 +61,6 @@ class ConversionReport:
             "source_path": self.source_path,
             "output_path": self.output_path,
             "source_file_type": self.source_file_type,
-            "requested_backend": self.requested_backend,
-            "selected_backend": self.selected_backend,
             "converter_extension": self.converter_extension,
             "converter_module": self.converter_module,
             "converter_options": self.converter_options,
@@ -88,8 +82,6 @@ class ConversionReport:
             f"- Source: `{self.source_path}`",
             f"- Output: `{self.output_path}`",
             f"- File type: `{self.source_file_type}`",
-            f"- Requested backend: `{self.requested_backend}`",
-            f"- Selected backend: `{self.selected_backend}`",
             f"- Converter extension: `{self.converter_extension}`",
             f"- Converter module: `{self.converter_module}`",
             f"- Passed: `{self.passed}`",
