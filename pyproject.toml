@@ -12,7 +12,7 @@ description = "Headless Omniverse Kit CAD to USD conversion using the HOOPS conv
 license = { file = "LICENSE" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "omniverse-kit==110.0.0.276876",
+    "omniverse-kit==110.1.0.293547",
 ]
 
 [project.scripts]
