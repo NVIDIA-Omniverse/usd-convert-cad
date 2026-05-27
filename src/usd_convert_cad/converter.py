@@ -188,8 +188,8 @@ def convert_file(
     if not source_path.exists():
         errors.append(f"source file does not exist: {source_path}")
 
-    if output_path.suffix.lower() not in {".usd", ".usda", ".usdc", ".usdz"}:
-        errors.append(f"output path must end in .usd, .usda, .usdc, or .usdz: {output_path}")
+    if output_path.suffix.lower() not in {".usd", ".usda", ".usdc"}:
+        errors.append(f"output path must end in .usd, .usda, or .usdc: {output_path}")
 
     if not errors:
         output_path.parent.mkdir(parents=True, exist_ok=True)
