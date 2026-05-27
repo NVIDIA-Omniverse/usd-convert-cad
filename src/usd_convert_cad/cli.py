@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output",
         type=Path,
-        help="Output .usd, .usda, .usdc, or .usdz path. Defaults to <input_dir>/_conversion/<input>.usd.",
+        help="Output .usd, .usda, or .usdc path. Defaults to <input_dir>/_conversion/<input>.usd.",
     )
     parser.add_argument("--fine", action="store_true", help="Use HOOPS tessLOD=4 unless --option tessLOD=... is supplied.")
     parser.add_argument("--coarse", action="store_true", help="Use HOOPS tessLOD=0 unless --option tessLOD=... is supplied.")

@@ -49,6 +49,14 @@ Do not use this skill to substitute mesh converters, hand-authored USD, or unrel
 
 ## Output Format
 
+Supported export formats:
+
+- `.usd`
+- `.usda`
+- `.usdc`
+
+USDZ export is not available yet. Support for `.usdz` is planned for a future release.
+
 Recommended external caller contract:
 
 ```bash
