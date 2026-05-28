@@ -43,9 +43,10 @@ Do not use this skill to substitute mesh converters, hand-authored USD, or unrel
 2. Confirm the extension is listed under Supported Formats.
 3. Check setup state before conversion. If neither `config.env` nor the repo-local `.venv` Python exists, run `python install.py`, then `python validate.py`, then conversion.
 4. Invoke the root `convert.py` wrapper for external workflows. Pass an explicit `--report` path in the same directory as the requested output and prefer `--quiet` for non-interactive agent workflows.
-5. After conversion, read the JSON status report first. Treat the report status, generated USD path, converter module, warnings, and errors as the primary contract.
-6. If conversion succeeds, avoid reading verbose Kit logs unless the user asks for them. If conversion fails and the report is insufficient, inspect only the relevant tail of the log.
-7. For option-discovery questions, inspect the installed extension docs with `python setup/inspect_extension_docs.py`, then read the extension's `SKILL.md`, `README.md`, `Usage.md`, `Overview.md`, `extension.toml`, and examples before recommending overrides.
+5. For Revit workflows that need source properties, pass `--metadata` so HOOPS `convertMetadata=true` is applied. Treat Revit Rooms and Spaces as unsupported unless the installed HOOPS Exchange SDK exposes them as model tree, BIM relationship, or documented room/space API data.
+6. After conversion, read the JSON status report first. Treat the report status, generated USD path, converter module, warnings, and errors as the primary contract.
+7. If conversion succeeds, avoid reading verbose Kit logs unless the user asks for them. If conversion fails and the report is insufficient, inspect only the relevant tail of the log.
+8. For option-discovery questions, inspect the installed extension docs with `python setup/inspect_extension_docs.py`, then read the extension's `SKILL.md`, `README.md`, `Usage.md`, `Overview.md`, `extension.toml`, and examples before recommending overrides.
 
 ## Output Format
 
@@ -106,7 +107,7 @@ The `.venv/` directory contains the Python 3.12 runtime dependencies, including 
 | `.stl` | STL input. |
 | `.ipt`, `.iam` | Autodesk Inventor input; may require CAD converter licensing. |
 | `.dwg`, `.dxf` | AutoCAD 3D input. |
-| `.rvt`, `.rfa` | Revit input; may require CAD converter licensing. |
+| `.rvt`, `.rfa` | Revit input; may require CAD converter licensing. Use `--metadata` for supported Revit properties; standalone Rooms/Spaces require HOOPS SDK support. |
 | `.par`, `.pwd`, `.psm` | Solid Edge input; may require CAD converter licensing. |
 | `.stp`, `.step`, `.igs`, `.iges` | STEP / IGES input. |
 | `.3dm` | Rhino input. |
@@ -153,6 +154,7 @@ Override documented converter options:
 python convert.py asset.jt asset.usd --option tessLOD=4
 python convert.py site.dgn site.usd --option tessLOD=4
 python convert.py assembly.step assembly.usd --option tessLOD=4
+python convert.py building.rvt building.usd --metadata
 python convert.py assembly.step assembly.usd --no-materials --keep-hidden
 ```
 
@@ -207,8 +209,11 @@ The CLI exposes these HOOPS convenience flags:
 - `--coarse` sets `tessLOD=0` unless `--option tessLOD=...` is supplied.
 - `--no-materials` sets `useMaterials=false`.
 - `--keep-hidden` sets `filterStyle=0` and `omitHiddenOnLoad=false`.
+- `--metadata` sets `convertMetadata=true` so supported source properties are authored as USD attributes.
 
 Pass additional HOOPS overrides with repeated `--option key=value` arguments. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script. For example, use `--option useMaterials=false` as an explicit equivalent to `--no-materials`.
+
+For Revit inputs, `--metadata` enables supported source property authoring under the HOOPS metadata namespace. Current HOOPS Exchange Revit reader output does not provide Revit Rooms or Spaces as standalone USD prims through this wrapper path. If room volumes, room boundaries, or room-specific properties are required, the HOOPS SDK must expose those entities through the loaded model tree, BIM relationship data, or another documented API before this wrapper can serialize them.
 
 For detailed converter APIs and option names, inspect the installed Kit extension package after the registry pull:
 
@@ -233,6 +238,7 @@ Conversion passes only when `status.error_code == 0`, `output_url` is non-empty,
 - This wrapper supports one converter core and does not expose converter selection.
 - `.prt` and `.asm` file interpretation depends on the source content because multiple CAD systems use those extensions.
 - The first install or first conversion may need network access to fetch Omniverse Kit packages or converter extensions.
+- Revit Rooms and Spaces are not emitted as standalone USD prims by the current HOOPS Exchange Revit reader path used by this wrapper.
 
 ## Troubleshooting
 

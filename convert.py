@@ -18,6 +18,7 @@ def print_usage() -> None:
     print()
     print(" Examples:")
     print("   python convert.py model.jt model.usd")
+    print("   python convert.py model.rvt model.usd --metadata")
     print("   python convert.py model.jt model.usd --option tessLOD=4")
     print("   python convert.py model.jt model.usd --no-materials --keep-hidden")
     print("   python convert.py model.jt model.usd --report model.json --quiet")

@@ -55,7 +55,7 @@ SUPPORTED_FORMATS: tuple[FormatInfo, ...] = (
     FormatInfo((".stl",), "STL input."),
     FormatInfo((".ipt", ".iam"), "Autodesk Inventor input."),
     FormatInfo((".dwg", ".dxf"), "AutoCAD 3D input."),
-    FormatInfo((".rvt", ".rfa"), "Revit input."),
+    FormatInfo((".rvt", ".rfa"), "Revit input; use --metadata for supported source properties."),
     FormatInfo((".par", ".pwd", ".psm"), "Solid Edge input."),
     FormatInfo((".stp", ".step", ".igs", ".iges"), "STEP / IGES input."),
     FormatInfo((".3dm",), "Rhino input."),

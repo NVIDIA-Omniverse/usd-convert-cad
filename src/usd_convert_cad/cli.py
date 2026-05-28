@@ -56,6 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--coarse", action="store_true", help="Use HOOPS tessLOD=0 unless --option tessLOD=... is supplied.")
     parser.add_argument("--no-materials", action="store_true", help="Disable material conversion with HOOPS useMaterials=false.")
     parser.add_argument("--keep-hidden", action="store_true", help="Keep hidden source entities when supported by HOOPS.")
+    parser.add_argument("--metadata", action="store_true", help="Convert source metadata with HOOPS convertMetadata=true.")
     parser.add_argument("--option", action="append", default=[], metavar="KEY=VALUE", help="Pass a converter-specific option.")
     parser.add_argument(
         "--report",
@@ -101,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         output,
         no_materials=args.no_materials,
         keep_hidden=args.keep_hidden,
+        metadata=args.metadata,
         extra_options=extra_options,
         shutdown=args.shutdown,
     )

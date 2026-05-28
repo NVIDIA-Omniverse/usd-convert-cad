@@ -33,9 +33,14 @@ def build_option_config(
     *,
     no_materials: bool = False,
     keep_hidden: bool = False,
+    metadata: bool = False,
     extra_options: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
-    """Build the config dictionary passed through the converter option class."""
+    """Build the config dictionary passed through the converter option class.
+
+    Convenience flags are applied before explicit ``--option`` overrides so
+    callers can still force a lower-level HOOPS option when needed.
+    """
     options: dict[str, Any] = dict(converter_info.default_options)
     warnings: list[str] = []
 
@@ -45,6 +50,9 @@ def build_option_config(
     if keep_hidden:
         options["filterStyle"] = 0
         options["omitHiddenOnLoad"] = False
+
+    if metadata:
+        options["convertMetadata"] = True
 
     if extra_options:
         options.update({key: _coerce_option_value(value) for key, value in extra_options.items()})
@@ -148,6 +156,7 @@ def convert_file(
     *,
     no_materials: bool = False,
     keep_hidden: bool = False,
+    metadata: bool = False,
     extra_options: dict[str, str] | None = None,
     shutdown: bool = False,
 ) -> ConversionReport:
@@ -181,6 +190,7 @@ def convert_file(
         CONVERTER,
         no_materials=no_materials,
         keep_hidden=keep_hidden,
+        metadata=metadata,
         extra_options=extra_options,
     )
     warnings.extend(option_warnings)

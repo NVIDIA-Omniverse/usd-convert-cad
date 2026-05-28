@@ -80,6 +80,7 @@ This wrapper uses the HOOPS converter core for every supported format listed in 
 ```bash
 python convert.py "model.jt" "model.usd"
 python convert.py "site.dgn" "site.usd"
+python convert.py "building.rvt" "building.usd" --metadata
 ```
 
 ## Converter Options
@@ -106,6 +107,7 @@ The CLI exposes a small set of HOOPS convenience flags:
 - `--coarse` sets `tessLOD=0` unless `--option tessLOD=...` is supplied.
 - `--no-materials` sets `useMaterials=false`.
 - `--keep-hidden` sets `filterStyle=0` and `omitHiddenOnLoad=false`.
+- `--metadata` sets `convertMetadata=true` so supported source properties are authored as USD attributes.
 
 Pass additional HOOPS overrides with repeated `--option key=value` arguments. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
 
@@ -113,10 +115,24 @@ Pass additional HOOPS overrides with repeated `--option key=value` arguments. Va
 python convert.py "model.jt" "model.usd" --option tessLOD=4
 python convert.py "site.dgn" "site.usd" --option tessLOD=4
 python convert.py "assembly.step" "assembly.usd" --option tessLOD=4
+python convert.py "building.rvt" "building.usd" --metadata
 python convert.py "assembly.step" "assembly.usd" --no-materials --keep-hidden
 ```
 
 Use the installed extension docs to confirm option names and enum values before passing overrides.
+
+### Revit Metadata And Rooms
+
+For Revit inputs, pass `--metadata` when the converted USD must include source
+properties exposed by HOOPS Exchange. These are authored under the
+`omni:hoops:metadata:*` namespace.
+
+Revit Rooms and Spaces are not emitted as standalone USD prims by the current
+HOOPS Exchange Revit reader path used by CAD Converter. The converter can only
+serialize Revit room entities if the HOOPS SDK exposes them through the loaded
+model tree, BIM relationship data, or another documented API. If a workflow
+requires Revit room volumes/boundaries and their room-specific properties,
+request that capability from Tech Soft 3D for the HOOPS Exchange Revit reader.
 
 ## Inspect Installed Converter Docs
 
