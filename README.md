@@ -35,6 +35,7 @@ If the output path is omitted, the CLI writes the USD and report under an `_conv
 ## Requirements
 
 - Python 3.12.
+- Supported platforms: `windows-x86_64`, `linux-x86_64`, and `linux-aarch64` (matching the published `omniverse-kit` wheels). Windows on ARM is not supported.
 - `omniverse-kit` installed from PyPI with `https://pypi.nvidia.com` as the package's documented extra index.
 - Network access to the Kit extension registry on first run.
 - NVIDIA CAD Converter licensing where required by the selected converter and file format.

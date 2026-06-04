@@ -17,6 +17,10 @@ compatibility:
   os:
     - Windows
     - Linux
+  platforms:
+    - windows-x86_64
+    - linux-x86_64
+    - linux-aarch64
   runtime: "Requires repo-local .venv created by install.py, with omniverse-kit and usd-convert-cad installed."
   network: "Requires access to NVIDIA PyPI extra index and the Omniverse Kit extension registry during install or first conversion."
 ---
