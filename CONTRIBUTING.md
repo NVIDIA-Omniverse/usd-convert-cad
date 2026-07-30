@@ -5,22 +5,21 @@
 
 Thank you for your interest in contributing to `usd-convert-cad`.
 
-This repository is a small Python reference app for headless CAD-to-USD
-conversion through the Omniverse Kit HOOPS converter core extension. Before opening a
-pull request, keep the change focused, document user-visible behavior, and run
-the validation or smoke tests that match the code you changed.
+This repository contains the Omniverse CAD Converter Python wheel sources,
+documentation, and NVIDIA Agent Skill. Before opening a pull request, keep the
+change focused and document user-visible behavior.
 
 ## Reporting Issues
 
-Use GitHub issues for bug reports, feature requests, and documentation problems.
-Include enough detail for maintainers to reproduce or understand the issue:
+Use GitHub issues for documentation problems, skill behavior, and supported-format
+requests. Include enough detail for maintainers to reproduce or understand the
+issue:
 
-- Package version or commit.
-- Operating system and Python version. Python 3.12 is required.
+- Repository commit.
+- Operating system and Python version. Python 3.12 is required by the wheel.
+- Installed `usd-convert-cad` wheel version (`python -c "import usd_convert_cad; print(usd_convert_cad.__version__)"`).
 - Input CAD format and requested output format.
-- Exact command or API call used.
-- JSON report path, relevant log output, or a short description of the
-  unexpected behavior.
+- Exact command used and the converter's stdout/stderr.
 
 Do not report security vulnerabilities through public GitHub issues. See
 `SECURITY.md` for private disclosure instructions.
@@ -32,85 +31,36 @@ description of the problem being solved and the approach taken.
 
 Before submitting a pull request:
 
-- Run `python validate.py` after setup or runtime changes.
-- Smoke test `python convert.py --formats` for CLI, supported formats, or packaging
-  changes.
-- Convert a small CAD sample when changing conversion behavior, converter
-  options, reports, or Kit startup.
-- Update `README.md`, `skills/omniverse-cad-to-usd/SKILL.md`, or both when
-  behavior, options, supported formats, setup requirements, or external
-  workflow contracts change.
-- Inspect installed converter extension docs with
-  `python setup/inspect_extension_docs.py` before changing converter-specific
-  options or API assumptions.
-- Keep public APIs and report fields backwards compatible unless the pull
-  request intentionally proposes a breaking change.
+- Verify the wheel installs and runs: `python -m pip install usd-convert-cad`
+  then `usd-convert-cad --help`.
+- Convert a small CAD sample when changing documented commands or options:
+  `usd-convert-cad -i sample.step -o sample.usdc`.
+- `skills/omniverse-cad-to-usd/SKILL.md` is the only real skill file. The
+  `.agent`, `.cursor`, `.claude`, and `.codex` directories are symlinks to
+  `skills`, so there is nothing to sync by hand.
+- Update `README.md` and `skills/omniverse-cad-to-usd/SKILL.md` together when
+  behavior, options, supported formats, or external workflow contracts change.
 
-## Development Setup
+## Agent Skill Directories
 
-Use Python 3.12. The repo-local setup script creates `.venv`, installs
-`omniverse-kit` from NVIDIA PyPI, writes `config.env`, and checks the converter
-extensions.
+`skills/omniverse-cad-to-usd/SKILL.md` is the single source of truth. The
+`.agent`, `.cursor`, `.claude`, and `.codex` directories are symbolic links to
+`skills`, so editing the canonical file updates every agent's view automatically.
+Do not replace these links with real directories or copies.
 
-```bash
-python install.py
-python validate.py
-```
-
-For non-interactive runs, ensure EULA acceptance is available in the
-environment or `config.env`:
-
-```bash
-OMNI_KIT_ACCEPT_EULA=yes
-```
-
-The first validation or conversion may need network access to the NVIDIA Kit
-extension registry. Some CAD formats or conversions may also require
-NVIDIA CAD Converter licensing.
-
-## Building
-
-The package uses standard Python packaging through Hatchling. From the repository
-root:
-
-```bash
-python -m pip install --upgrade build
-python -m build
-```
-
-## Testing
-
-There is no large checked-in CAD test corpus. Prefer small sample assets that
-are suitable for source control, and do not commit large CAD assemblies or local
-Kit caches.
-
-Useful smoke tests:
-
-```bash
-python validate.py
-python convert.py --formats
-python convert.py input.jt input.usd --report cad-conversion-status.json
-```
-
-When a conversion fails, read the JSON report first, then inspect the relevant
-log output. Reports should preserve the converter module,
-options, warnings, errors, and pass/fail status.
+On platforms that cannot create symlinks (for example Windows without Developer
+Mode), Git still records them as symlinks; enable Developer Mode or run with
+privileges and `git checkout -- .agent .cursor .claude .codex` to materialize
+them locally.
 
 ## Repository Conventions
 
-- `convert.py`, `install.py`, and `validate.py` are repo-local wrappers and
-  should remain the recommended external entry points.
+- `source/python/` contains the Python package and wheel sources.
 - `skills/omniverse-cad-to-usd/SKILL.md` is the canonical NVIDIA Agent Skill
   entrypoint. Keep the directory name aligned with the `name` frontmatter.
-- Local agent compatibility links should point to `skills/`; do not maintain
-  duplicate skill copies in legacy skill directories.
-- `app/run_conversion.py` is the runtime entry point used by the wrappers.
-- `src/usd_convert_cad/formats.py` owns the supported format list and suffixes.
-- `src/usd_convert_cad/converter.py` owns option construction and converter task
-  execution.
-- `src/usd_convert_cad/kit_runtime.py` must keep `omni.kit_app.KitApp` as the
-  first Omniverse import in the process.
-- `src/usd_convert_cad/report.py` owns JSON and Markdown conversion reports.
+- The supported-format table is documentation that mirrors the formats supported
+  by the installed wheel. Keep it accurate against `usd-convert-cad --help` and
+  the wheel's documentation.
 
 ## Signing Your Work
 
@@ -123,7 +73,7 @@ Contributions containing commits that are not signed off may not be accepted.
 To sign off on a commit, use the `--signoff` or `-s` option:
 
 ```bash
-git commit -s -m "Add conversion option"
+git commit -s -m "Update supported formats"
 ```
 
 This appends a line like this to your commit message:
@@ -168,16 +118,13 @@ involved.
 
 ## Coding Guidelines
 
-- Follow the existing code style in the files you edit.
+- Follow the existing style in the files you edit.
 - Keep changes narrowly scoped and avoid unrelated formatting churn.
-- Add the SPDX header used by existing Python files to new Python files.
-- Add comments only where they clarify non-obvious Kit startup, converter
-  behavior, conversion report, or USD behavior.
-- Do not commit `.venv/`, `config.env`, `__pycache__/`, `*.pyc`, local
-  Omniverse/Kit caches, `_conversion/`, generated reports, or large CAD assets.
+- Preserve the SPDX header used by existing files.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the
-Apache License, Version 2.0 and the Creative Commons Attribution 4.0
-International Public License. See `LICENSE` for details.
+Contributions to the agent skill are licensed under the Apache License, Version
+2.0 and the Creative Commons Attribution 4.0 International Public License. See
+`skills/omniverse-cad-to-usd/LICENSE.md` for details. The Omniverse CAD
+Converter package and runtime are governed by the NVIDIA terms in `LICENSE.md`.

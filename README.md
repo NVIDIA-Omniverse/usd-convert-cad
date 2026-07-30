@@ -3,137 +3,104 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0 -->
 
-Headless CAD-to-USD conversion using the Omniverse Kit Python runtime and the HOOPS CAD converter core extension pulled from the Kit registry.
+The **Omniverse CAD Converter**, distributed using the `usd-convert-cad`
+package and command-line identifier, converts supported CAD files to OpenUSD.
 
-This repository is a small reference app and NVIDIA Agent Skill for converting supported CAD files through the HOOPS Kit converter core:
+This repository contains the Python package sources, agent skill, and
+documentation for the Omniverse CAD Converter.
 
-- HOOPS converter core for JT, DGN, general CAD, and neutral CAD formats.
+This is a Skillhub-style repository for agent-assisted CAD conversion workflows.
+It contains the instructions, documentation, and workflow contract that AI agents
+use to install, verify, and run the `usd-convert-cad` wheel from a Python
+environment.
 
-The goal is to keep the supported-format policy visible in code and in `skills/omniverse-cad-to-usd/SKILL.md`, while deferring detailed converter API and option guidance to the installed extension packages after they are downloaded from the Kit registry.
+The repository does not require agents to install Omniverse Kit, pull an
+extension from an extension registry, or run a Kit app. Conversion is performed
+through the pip-installable `usd-convert-cad` package, which provides the
+`usd-convert-cad` command-line entry point and bundles the OpenUSD (`pxr`) and
+CAD conversion runtime needed by the tool.
 
-## Role In Physical AI Workflows
+Key repository areas:
 
-`usd-convert-cad` is intended to be its own repository and conversion app. Higher-level agent workflow repositories, such as `physical-ai-skill-hub-dev`, should not reimplement Kit startup or CAD converter calls. They should locate this checkout, call its CLI, consume its report, and then continue with validation, material assignment, physics authoring, or SimReady conformance.
+- `skills/omniverse-cad-to-usd` - canonical NVIDIA Agent Skill for CAD-to-USD
+  conversion.
+- `docs` - CAD-to-OpenUSD concept mapping and related documentation.
+- `source/python` - Python package notes and wheel metadata used by the
+  installable package.
+- `LIMITATIONS.md` - known package and converter limitations.
+- `CONTRIBUTING.md` - contribution requirements and supported-format update
+  policy.
 
-Recommended integration contract:
+## Getting Started
+
+Create an isolated Python 3.12 environment, install the package, and verify the
+command is available.
+
+Windows:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install usd-convert-cad
+usd-convert-cad --help
+```
+
+Linux:
 
 ```bash
-USD_CONVERT_CAD_ROOT=/path/to/usd-convert-cad
-python "$USD_CONVERT_CAD_ROOT/convert.py" "/path/to/model.jt" "model.usd" --report "cad-conversion-status.json"
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install usd-convert-cad
+usd-convert-cad --help
 ```
 
-The called workflow should treat the JSON status report as the handoff artifact. It contains a `conversion_id`, UTC timestamp, source path, output path, converter module, converter options, warnings, errors, and pass/fail status.
+If the package is hosted on an NVIDIA package index rather than public PyPI, add
+the appropriate index URL:
 
-When an output path is provided, generated files stay in the directory the caller specified. If `--report` is omitted, the CLI writes a timestamped report beside the output USD:
-
-```text
-<output_dir>/<output_stem>-<conversion_id>.json
+```bash
+python -m pip install usd-convert-cad --extra-index-url https://pypi.nvidia.com
 ```
 
-If the output path is omitted, the CLI writes the USD and report under an `_conversion/` directory next to the input file. For automated callers, prefer passing an explicit `--report` path so the caller already knows where to read the result. The timestamped default is useful for ad hoc runs and preserving conversion history.
+The canonical skill lives at
+`skills/omniverse-cad-to-usd/SKILL.md`. The installed wheel also includes the
+skill so agents can discover the same workflow guidance from the package.
 
 ## Requirements
 
-- Python 3.12.
-- Supported platforms: `windows-x86_64`, `linux-x86_64`, and `linux-aarch64` (matching the published `omniverse-kit` wheels). Windows on ARM is not supported.
-- `omniverse-kit` installed from PyPI with `https://pypi.nvidia.com` as the package's documented extra index.
-- Network access to the Kit extension registry on first run.
-- NVIDIA CAD Converter licensing where required by the selected converter and file format.
+- Runtime: Python 3.12.
+- Package: `usd-convert-cad` installed from a Python package index.
+- Network: package-index access during install only.
+- OS/Arch: Windows x86_64, Linux x86_64, or Linux aarch64.
+- Licensing: proprietary CAD formats can require CAD converter licensing.
 
-For non-interactive runs, set:
+Use a dedicated virtual environment. The wheel bundles its own OpenUSD (`pxr`)
+runtime, so isolation avoids conflicts with other OpenUSD distributions in the
+same interpreter.
 
-```bash
-export OMNI_KIT_ACCEPT_EULA=yes
-```
+The wheel is self-contained at runtime and does not depend on Omniverse Kit,
+`usd-core`, or a separately installed `pxr` package.
 
-## Quick Start
+## Usage
 
-```bash
-python install.py
-python validate.py
-python convert.py "/path/to/part.jt" "/path/to/out/part.usd"
-```
-
-This writes the converted USD and status report beside the requested output path. If the output path is omitted, they are written into `_conversion` folder generated in the input file directory.
-
-The equivalent Python command is:
+After installing the wheel, convert an input CAD asset from the command line.
+`usd-convert-cad` is the installed console script; `python -m usd_convert_cad`
+runs the same CLI through the Python module.
 
 ```bash
-.venv/bin/python app/run_conversion.py --input "/path/to/part.jt" --output "/path/to/part.usd"
+usd-convert-cad -i path/to/input.step -o path/to/output.usdc
 ```
 
-On Windows, the virtual environment Python is `.venv\Scripts\python.exe`; on Linux, it is `.venv/bin/python`.
-
-Useful wrapper commands:
-
-```bash
-python convert.py --formats
-python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json" --quiet
-python convert.py "/path/to/part.jt" "/path/to/out/part.usd" --report "part.json" --quiet --log "part.log"
-```
-
-`--quiet` and `--log` are available on the root `convert.py` wrapper for external automation. The internal `app/run_conversion.py` command uses `--input` / `--output` and supports `--formats`, `--report`, `--markdown-report`, and `--shutdown`.
-
-## Converter Core
-
-This wrapper uses the HOOPS converter core for every supported format listed in `skills/omniverse-cad-to-usd/SKILL.md`. The CLI does not expose converter selection.
-
-```bash
-python convert.py "model.jt" "model.usd"
-python convert.py "site.dgn" "site.usd"
-```
-
-## Converter Options
-
-The wrapper creates the documented HOOPS option class and passes `options.toArgs()` to `create_converter_task(...)`:
-
-| Backend | Option class |
-|---|---|
-| HOOPS converter core | `HoopsOptions` |
-
-The wrapper starts from these HOOPS defaults before applying convenience flags and `--option` overrides:
-
-- `instancingStyle=2`
-- `compositionStyle=0`
-- `filterStyle=1`
-- `tessLOD=2`
-- `useMaterials=true`
-
-Materials are enabled by default with `useMaterials=true`. Pass `--no-materials` or `--option useMaterials=false` only when material conversion should be disabled.
-
-The CLI exposes a small set of HOOPS convenience flags:
-
-- `--fine` sets `tessLOD=4` unless `--option tessLOD=...` is supplied.
-- `--coarse` sets `tessLOD=0` unless `--option tessLOD=...` is supplied.
-- `--no-materials` sets `useMaterials=false`.
-- `--keep-hidden` sets `filterStyle=0` and `omitHiddenOnLoad=false`.
-
-Pass additional HOOPS overrides with repeated `--option key=value` arguments. Values are parsed as JSON when possible, so booleans, numbers, arrays, and objects can be passed without writing a custom script.
-
-```bash
-python convert.py "model.jt" "model.usd" --option tessLOD=4
-python convert.py "site.dgn" "site.usd" --option tessLOD=4
-python convert.py "assembly.step" "assembly.usd" --option tessLOD=4
-python convert.py "assembly.step" "assembly.usd" --no-materials --keep-hidden
-```
-
-Use the installed extension docs to confirm option names and enum values before passing overrides.
-
-## Inspect Installed Converter Docs
-
-The Kit registry packages are the source of truth for detailed converter API and options. After the extensions are downloaded, inspect local extension docs with the repo-local runtime:
-
-```bash
-python setup/inspect_extension_docs.py
-```
-
-Look for the HOOPS extension's `SKILL.md`, `README.md`, `Usage.md`, `Overview.md`, `extension.toml`, and examples before adding or changing converter options.
+See [`skills/omniverse-cad-to-usd/SKILL.md`](skills/omniverse-cad-to-usd/SKILL.md)
+for the full option table.
 
 ## License And Contributions
 
-This project is released under the Apache License, Version 2.0 and the Creative
-Commons Attribution 4.0 International Public License. See `LICENSE` for the full
-license text and `THIRD_PARTY_NOTICES.md` for third-party notices.
+This project is governed by the NVIDIA agreements in `LICENSE.md`. The agent
+skill under `skills/omniverse-cad-to-usd` carries its Apache-2.0 and CC-BY-4.0
+license text in `skills/omniverse-cad-to-usd/LICENSE.md`. See
+`THIRD_PARTY_NOTICES.md` for third-party notices.
 
 External contributions are accepted only with Developer Certificate of Origin
 (DCO) sign-off. See `CONTRIBUTING.md` for contribution requirements and the full
@@ -143,46 +110,151 @@ DCO text.
 
 ```text
 usd-convert-cad/
-├── .agents/
-│   └── skills/
-│       └── usd-convert-cad/
-│           └── SKILL.md # canonical skill source
-├── .claude/
-│   └── skills -> ../.agents/skills # compatibility symlink
-├── .codex/
-│   └── skills -> ../.agents/skills # compatibility symlink
+├── source/python/                    # Python package and wheel sources
+├── skills/
+│   └── omniverse-cad-to-usd/
+│       └── SKILL.md        # canonical skill source
+├── .agent  -> skills                      # symlink
+├── .cursor -> skills                      # symlink
+├── .claude -> skills                      # symlink
+├── .codex  -> skills                      # symlink
+├── docs/
+│   └── concept_mapping.md
 ├── .gitignore
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
-├── LICENSE
+├── LICENSE.md
 ├── README.md
 ├── SECURITY.md
-├── THIRD_PARTY_NOTICES.md
-├── pyproject.toml
-├── _script_utils.py
-├── convert.py
-├── install.py
-├── validate.py
-├── app/
-│   └── run_conversion.py
-├── setup/
-│   ├── fetch_extensions.py
-│   ├── inspect_extension_docs.py
-│   └── validate_env.py
-└── src/
-    └── usd_convert_cad/
-        ├── __init__.py
-        ├── cli.py
-        ├── converter.py
-        ├── formats.py
-        ├── kit_runtime.py
-        └── report.py
+└── THIRD_PARTY_NOTICES.md
 ```
 
-## Notes
+The output path determines the USD file format. Supported output extensions are
+`.usd`, `.usda`, and `.usdc`. USDZ (`.usdz`) export is not supported.
 
-- `omni.kit_app.KitApp` must be the first Omniverse import in the process.
-- The first conversion can take longer because Kit downloads converter extensions from the registry.
-- If a core module import fails, run `python validate.py` and inspect the downloaded extension packages before changing converter code.
-- `pyproject.toml` makes this repository installable and exposes the optional `usd-convert-cad` console entrypoint. The console script uses `--input` / `--output` and does not support `convert.py`'s positional paths, `--quiet`, or `--log`; external workflows should call `python convert.py` for the repo-local wrapper behavior.
-- `.agents/skills/` is the canonical skill path. Local `.claude/skills` and `.codex/skills` compatibility links can point to it for agent-specific discovery.
+The command returns exit code `0` on success and prints
+`Successfully converted: <output>`. On failure, it returns a non-zero exit code
+and prints the converter error message to stderr. Agent workflows should branch
+on the exit code and confirm the expected output file exists before continuing.
+
+Common conversion options include `--tess-lod`, `--revit-lod`,
+`--accurate-tessellation`, `--convert-curves`, `--convert-metadata`,
+`--no-dedup`, `--no-normals`, `--no-materials`, `--material-type`,
+`--up-axis`, `--instancing-style`, `--composition-style`, `--filter-style`,
+`--load-hidden`, `--progress`, `--convert-physics-data`, and
+`--view-layer-name`.
+
+Common examples:
+
+```bash
+# Choose output format by extension: .usd, .usda, or .usdc.
+usd-convert-cad -i assembly.step -o assembly.usdc
+
+# Export geometry without materials.
+usd-convert-cad -i assembly.step -o assembly.usda --no-materials
+
+# Convert metadata and keep hidden CAD elements as hidden USD prims.
+usd-convert-cad -i plant.ifc -o plant.usdc --convert-metadata --filter-style hide
+
+# Increase tessellation level of detail.
+usd-convert-cad -i part.jt -o part.usdc --tess-lod 4
+
+# Convert a CAD view layer or simplified representation by name.
+usd-convert-cad -i assembly.asm -o assembly.usdc --view-layer-name "Manufacturing"
+```
+
+Run `usd-convert-cad --help` for the authoritative option list for the installed
+wheel version.
+
+### Supported Input Formats
+
+The package supports the CAD, AEC, and interchange formats documented by the
+installed wheel, including:
+
+- JT: `.jt`
+- DGN: `.dgn`
+- CATIA V5 / V6: `.catpart`, `.catproduct`, `.cgr`, `.3dxml`
+- IFC: `.ifc`, `.ifczip`
+- NX / Creo / Solid Edge: `.prt`, `.asm`, `.par`, `.pwd`, `.psm`
+- Parasolid: `.xmt`, `.x_t`, `.x_b`, `.xmt_txt`
+- SolidWorks: `.sldprt`, `.sldasm`
+- Autodesk Inventor: `.ipt`, `.iam`
+- AutoCAD 3D: `.dwg`, `.dxf`
+- Revit: `.rvt`, `.rfa`
+- STEP / IGES: `.stp`, `.step`, `.igs`, `.iges`
+- Rhino: `.3dm`
+- Common 3D interchange formats: `.stl`, `.dae`, `.fbx`, `.obj`, `.3ds`,
+  `.3mf`, `.gltf`, `.glb`
+- ACIS: `.sat`, `.sab`
+
+AutoCAD (`.dwg`, `.dxf`) and Revit (`.rvt`, `.rfa`) inputs are not supported on
+Linux aarch64.
+
+Known limitations are documented in `LIMITATIONS.md`.
+
+## Releases
+
+- Releases/Changelog: `CHANGELOG.md`
+- Skill version: `skills/omniverse-cad-to-usd/SKILL.md`
+- Package version source: `VERSION`
+
+## Contribution Guidelines
+
+Use GitHub pull requests for skill, documentation, package metadata, and
+supported-format updates. Keep changes focused and document user-visible
+behavior.
+
+Before opening a pull request:
+
+- Verify the wheel installs in Python 3.12.
+- Run `usd-convert-cad --help`.
+- Convert a small shareable CAD asset when changing documented commands,
+  options, formats, or workflow behavior.
+- Update `README.md` and `skills/omniverse-cad-to-usd/SKILL.md` together when
+  behavior, options, supported formats, or external workflow contracts change.
+
+External contributions require Developer Certificate of Origin (DCO) sign-off.
+See `CONTRIBUTING.md` for contribution requirements and the full DCO text.
+
+### Governance & Maintainers
+
+This project is maintained by NVIDIA. Project governance, maintainers, and
+triage policy are managed by the repository owners.
+
+### Security
+
+- Vulnerability disclosure: `SECURITY.md`
+- Do not file public issues for security reports.
+
+### Support
+
+- Level: Community support through repository issues.
+- How to get help: Open a GitHub issue with environment details, input asset
+  type, conversion command, and error output.
+- Include: OS/architecture, Python version, wheel version, input format,
+  requested output format, full conversion command, logs or stack traces, and a
+  small reproduction asset when it can be shared.
+
+## Community
+
+Use repository issues and pull requests for project communication.
+
+## References
+
+- Agent skill: `skills/omniverse-cad-to-usd/SKILL.md`
+- Python package notes: `source/python/README.md`
+- Concept mapping: `docs/concept_mapping.md`
+- Known limitations: `LIMITATIONS.md`
+- OpenUSD: https://openusd.org/
+- NVIDIA Omniverse: https://www.nvidia.com/en-us/omniverse/
+
+## License
+
+Omniverse CAD Converter and `usd-convert-cad` are governed by the NVIDIA
+agreements in `LICENSE.md`.
+
+The agent skill under `skills/omniverse-cad-to-usd` carries Apache-2.0 and
+CC-BY-4.0 license text in `skills/omniverse-cad-to-usd/LICENSE.md`.
+
+Third-party notices and license attributions are listed in
+`THIRD_PARTY_NOTICES.md`.
