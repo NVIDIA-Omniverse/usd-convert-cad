@@ -11,7 +11,7 @@ Omniverse CAD Converter. The converter is distributed separately through the
 `usd-convert-cad` Python wheel.
 
 The documentation and agent skill in this repository were tested with
-`usd-convert-cad==0.3.0` on Python 3.12. Newer wheel versions may add or change
+`usd-convert-cad==0.4.0` on Python 3.12. Newer wheel versions may add or change
 options; check `usd-convert-cad --help` and the installed package version before
 relying on behavior not documented here.
 
@@ -153,6 +153,21 @@ and `--view-layer-name`.
 
 Use `--material-type preview-surface-materialx` to author OpenPBR MaterialX
 with a USD Preview Surface fallback.
+
+Source UVs and supported material textures are preserved by default. Images are
+written to `Textures/` beside the USD; keep that directory with the output.
+Use `--no-texture-coordinates` to omit source UVs and texture images.
+`--up-axis` changes stage metadata only; it does not rotate geometry or transforms.
+
+Use `--prototype-all-parts` to prototype unique parts as well as repeated parts;
+it has no effect with `--instancing-style none`.
+
+With `--read-constraints`, named constraint sets become Scope prims and supported
+Contact constraints produce rigid bodies and convex-hull mesh collisions.
+Joint paths can change, and Contact export can disable instancing. Convex hulls
+can fill openings and concavities; inspect collisions before simulation.
+
+See [Limitations](LIMITATIONS.md) for texture and constraint restrictions.
 
 Common examples:
 

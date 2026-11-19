@@ -70,13 +70,9 @@ The current Omniverse CAD Converter does not preserve:
 - Enough source data for general CAD round trip.
 - Native CAD B-rep topology as an OpenUSD B-rep schema. B-rep and poly B-rep
   geometry are emitted as tessellated `UsdGeomMesh`.
-- Texture coordinates as USD UV primvars. HOOPS textured tessellation indices
-  may be read while processing faces, but `primvars:st` is not authored.
 - Point sets, direction items, coordinate systems, or plane representation
   items as dedicated OpenUSD geometry prims.
-- CAD assembly constraints other than the supported fixed-constraint mappings.
-  The converter does not apply collision APIs, rigid-body APIs, or custom
-  constraint attributes.
+- CAD assembly constraints other than supported fixed-joint and Contact mappings.
 - Visible PMI geometry or editable semantic PMI as dedicated USD annotation
   prims.
 - Revit Rooms or Spaces as standalone spatial prims.
@@ -156,7 +152,8 @@ metersPerUnit = A3DAsmProductOccurrenceData::m_dUnit * 0.001
 ```
 
 HOOPS `m_dUnit` is millimeters per model unit. Multiplying by `0.001` converts
-that value to USD meters per unit.
+that value to USD meters per unit. Collada, glTF, and GLB instead use `1.0` because
+their imported geometry and transforms are in meters.
 
 The converter sets `creator` metadata through the USD layer export path when a
 creator string is supplied or left at its build-derived default.
@@ -204,6 +201,10 @@ Composition arcs are deferred until traversal finishes. This avoids resolving
 partially-authored sub-stages during the tree walk.
 
 ### Instancing and Prototypes
+
+Prototypes default to repeated parts only (`prototypeAllParts=false`); unique parts are authored
+directly. Use `--prototype-all-parts` to restore all-parts prototypes. `--instancing-style none`
+disables prototypes regardless of this flag.
 
 `instancingStyle` controls how reusable parts are authored:
 
@@ -343,6 +344,24 @@ When generated materials are disabled, the converter binds one
 `DefaultDisplayColorMaterial` at the default prim. Its Preview Surface shader
 reads `displayColor` and `displayOpacity` through primvar readers.
 
+### Source UVs and Material Textures
+
+Source UVs are preserved by default as indexed face-varying `st`, `st1`, `st2`, etc., retaining
+seams across welded vertices. Missing coordinates use an unauthored index; entirely untextured
+meshes gain no UVs. Invalid offsets warn and are treated as missing; a renderer may sample the
+placeholder. `--no-texture-coordinates` disables source UVs and texture-image export. This does not
+generate projection UVs.
+
+Supported material inputs include base color, normal, emissive, roughness, metalness, packed ORM,
+and alpha-mask cutouts. Embedded PNG, JPEG, and BMP images are copied into `Textures/` beside the
+output USD with relative paths and collision-safe names. Keep that directory with the USD when
+moving or sharing it. USDZ packages referenced images into the archive.
+
+Textures require enabled materials and source UVs. Materials with different
+texture assignments remain distinct even when their scalar values match.
+See [texture limitations](../LIMITATIONS.md#source-uvs-and-material-textures)
+for supported mappings, channels, and alpha behavior.
+
 ### Metadata Attributes
 
 When `convertMetadata=true`, HOOPS attributes and properties are authored as
@@ -436,8 +455,8 @@ cause native B-rep geometry to be authored to USD.
 ### Assembly Constraints and USD Physics Joints
 
 When `readConstraints=true`, the converter loads supported native assembly
-constraints and authors USD Physics fixed joints. The option defaults to
-`false`, making constraint conversion an explicit opt-in capability.
+constraints and authors USD Physics fixed joints and supported Contact collision
+data. The option defaults to `false`, making constraint conversion opt-in.
 
 The source-CAD-to-USD mapping is:
 
@@ -453,7 +472,7 @@ The source-CAD-to-USD mapping is:
 The converter authors `localPos0`, `localRot0`, `localPos1`, and `localRot1` so
 the fixed joint preserves the component's world pose for CATIA V5, NX, and
 SolidWorks `Fix`, or the authored relative pose for CATIA V5 `Fix Together`, NX
-`Bond`, and SolidWorks `Lock` mate. Constraint sets are traversed recursively.
+`Bond`, and SolidWorks `Lock` mate. Named and nested constraint sets become Scope prims, so joint paths can change.
 Source constraint status is represented by `physics:jointEnabled`: OK status
 uses the enabled fallback, while other statuses author `false`. Joint body
 relationships target converted product-occurrence prims.
@@ -461,8 +480,17 @@ Source constraint names are used for joint prim names, with display names
 preserved when USD identifier encoding changes the source name.
 
 `readConstraints` is independent of `convertPhysicsData`. The former authors
-USD Physics joint schemas; the latter computes mass-property-like values and
-authors them as `omni:hoops:physics:*` custom attributes.
+USD Physics joints and supported Contact rigid-body/collision schemas; the
+latter computes mass-property-like values and authors them as
+`omni:hoops:physics:*` custom attributes.
+
+Supported `Contact` constraints apply `UsdPhysicsRigidBodyAPI` to bodies and
+`UsdPhysicsCollisionAPI` / `UsdPhysicsMeshCollisionAPI` to descendant meshes.
+Contact export can disable instancing. Collision meshes use `convexHull`,
+which can fill openings and concavities and cause artificial overlaps.
+The CLI uses file-path output, supporting Contact with all composition styles.
+For backend integrations, composed `SdfLayer` output can skip Contact while
+other conversion succeeds; see [constraint limitations](../LIMITATIONS.md#constraint-groups-and-contact-collisions).
 
 ### Visibility, Suppression, and Filtering
 
@@ -495,12 +523,15 @@ the selected filter mode.
 ### Units and Stage Metrics
 
 USD stage metrics define the physical interpretation of authored coordinates.
-The converter authors `metersPerUnit` from the first root product occurrence
-unit reported by HOOPS Exchange:
+For most formats, the converter authors `metersPerUnit` from the first root
+product occurrence unit reported by HOOPS Exchange:
 
 ```text
 metersPerUnit = productOccurrence.m_dUnit * 0.001
 ```
+
+Collada, glTF, and GLB use `metersPerUnit = 1.0`: their imported geometry and
+transforms describe a scene in meters.
 
 The converter does not independently parse every source format's native unit
 fields. If HOOPS Exchange does not expose a unit through the loaded model tree,
@@ -517,8 +548,9 @@ The `upAxis` parameter controls authored stage up-axis:
 | `eYup` | Authors Y-up. |
 | `eZup` | Authors Z-up. |
 
-The up-axis setting is stage metadata. Consumers must interpret it together
-with authored transforms and mesh coordinates.
+The up-axis setting changes stage metadata only; it does not rotate mesh points
+or transforms. Consumers must interpret it together with authored transforms
+and mesh coordinates.
 
 ## Conversion Options That Affect Mapping
 
@@ -530,13 +562,15 @@ file-format arguments.
 | --- | --- | --- |
 | `compositionStyle` | `eNone` (0, default), `eReference` (1), `ePayload` (2) | Chooses monolithic output or separate files composed by references or payloads. |
 | `instancingStyle` | `eNone` (0), `eReference` (1), `eInstanceableReference` (2, default) | Controls prototype references and whether eligible occurrence prims are marked instanceable. |
+| `prototypeAllParts` | `false` default | Creates prototypes only for repeated parts; `true` includes unique parts unless instancing is disabled. |
+| `convertTextureCoordinates` | `true` default | Preserves source UV sets; disabling also prevents material image export. |
 | `instancing` | Boolean legacy argument | Maps `true` to `eInstanceableReference` and `false` to `eNone` before `instancingStyle` is parsed. |
 | `globalXforms` | `false` default | When instancing is disabled, chooses local transforms on hierarchy prims or global transforms on mesh prims. |
 | `filterStyle` | `eNone` (0), `eOmit` (1), `eHide` (2, default), `eDeactivate` (3) | Controls hidden or removed source element handling. Invalid file-format values fall back to `eNone` during argument parsing. |
 | `omitHiddenOnLoad` | `true` default | With `filterStyle=eOmit`, requests hidden objects be skipped during HOOPS loading. |
 | `convertCurves` | `false` default | Enables visible curve and poly wire output as `UsdGeomBasisCurves`. |
 | `convertMetadata` | `false` default | Enables source metadata attributes and IFC BIM relationship export support. |
-| `readConstraints` | `false` default | Exports CATIA V5, NX, and SolidWorks `Fix`, CATIA V5 `Fix Together`, NX `Bond`, and SolidWorks `Lock` mate as USD Physics fixed joints. |
+| `readConstraints` | `false` default | Exports CATIA V5, NX, and SolidWorks `Fix`, CATIA V5 `Fix Together`, NX `Bond`, and SolidWorks `Lock` mate as USD Physics fixed joints under constraint-set scopes, and supported Contact constraints as rigid-body/collision APIs. |
 | `convertPhysicsData` | `false` default | Enables physical-property custom attributes on authored B-rep or poly B-rep RI prims. |
 | `physicsAccuracyLevel` | `0.0` through `1.0`, default `0.99` | Sets HOOPS physical-property computation accuracy. |
 | `physicsUseGeometryOnRiBRep` | `false` default | Requests exact B-rep geometry for physical-property computation when available. |
@@ -725,7 +759,7 @@ representation items. Current converter mesh output maps that tessellation to
 | --- | --- | --- |
 | Source triangle vertex data | `UsdGeomMesh` topology and points | Source triangles become `faceVertexCounts=3`, `faceVertexIndices`, and `points`. |
 | Source normals | Indexed vertex normal primvar data | Authored when normal data exists in the mesh converter path. Invalid normals can be recomputed. |
-| Source texture coordinates | Not authored | No current USD UV primvars. |
+| Source texture coordinates | Indexed face-varying `st`, `st1`, etc. | Enabled by default; preserves seams across welded vertices. |
 | Source style, material, or color groups | `UsdGeomSubset`, material bindings, raw material attributes, or display primvars | Used to preserve assignment at mesh or subset granularity. |
 | Source face grouping | Mesh face-index ranges and subset indices | Source face groups influence material grouping but are not always separate USD prims. |
 

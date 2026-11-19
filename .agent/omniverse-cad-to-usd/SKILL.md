@@ -1,7 +1,7 @@
 ---
 name: omniverse-cad-to-usd
 description: Convert supported CAD files to OpenUSD with the standalone usd-convert-cad Python wheel.
-version: "0.3.0"
+version: "0.4.0"
 author: NVIDIA Omniverse
 tags:
   - omniverse
@@ -47,7 +47,7 @@ This skill no longer installs Omniverse Kit or pulls a CAD converter extension f
 
 ## Tested Wheel Version
 
-This skill was tested with `usd-convert-cad==0.3.0` on Python 3.12. If another
+This skill was tested with `usd-convert-cad==0.4.0` on Python 3.12. If another
 wheel version is installed, run `usd-convert-cad --help` and verify the installed
 package version before using options or behavior that may have changed.
 
@@ -55,15 +55,16 @@ package version before using options or behavior that may have changed.
 
 1. Confirm the source file exists and detect the file type by extension.
 2. Confirm the extension is listed under Supported Formats. For AutoCAD (`.dwg`, `.dxf`) and Revit (`.rvt`, `.rfa`) inputs, first check the platform: these formats are not supported on `linux-aarch64` (see Platform Support). On `linux-aarch64`, do not attempt the conversion — report the platform limitation instead.
-3. Create or reuse an isolated Python 3.12 virtual environment for the wheel. The wheel bundles its own OpenUSD (`pxr`) runtime, so isolating it prevents conflicts with any other `pxr` distribution in a shared interpreter.
+3. After identifying the input format, platform, and requested result, check them against the Key Limitations section below. Explain any applicable restrictions before converting or promising that particular features will be preserved.
+4. Create or reuse an isolated Python 3.12 virtual environment for the wheel. The wheel bundles its own OpenUSD (`pxr`) runtime, so isolating it prevents conflicts with any other `pxr` distribution in a shared interpreter.
    - Create: `python3.12 -m venv .venv`, or `py -3.12 -m venv .venv` on Windows.
    - Activate: `.venv\Scripts\Activate.ps1` (PowerShell), `.venv\Scripts\activate.bat` (cmd.exe), or `source .venv/bin/activate` (bash). Or skip activation and call the interpreter directly: `.venv\Scripts\python.exe` (Windows) or `.venv/bin/python` (Linux).
-4. Ensure the wheel is installed in that environment. Probe with `python -c "import usd_convert_cad"` or `usd-convert-cad --help`. If it is missing, install it with `python -m pip install usd-convert-cad`.
-5. Run the conversion with the `usd-convert-cad` console command (or `python -m usd_convert_cad`), passing `-i <input>` and `-o <output>`. Choose the output extension (`.usd`, `.usda`, `.usdc`, or `.usdz`).
-6. Treat the process exit code as the authoritative result: `0` means success, non-zero means failure. On success the tool prints `Successfully converted: <output>`; confirm the output file exists.
-7. On failure, read stderr. The tool prints `Error: conversion failed with code <n>` followed by the converter error message.
-8. For option-discovery questions, run `usd-convert-cad --help` to read the documented options for the installed wheel version before recommending overrides.
-9. For mapping, BIM, unit, metadata, material, instancing, or Revit room/space questions, read `../../docs/concept_mapping.md` before answering.
+5. Ensure the wheel is installed in that environment. Probe with `python -c "import usd_convert_cad"` or `usd-convert-cad --help`. If it is missing, install it with `python -m pip install usd-convert-cad`.
+6. Run the conversion with the `usd-convert-cad` console command (or `python -m usd_convert_cad`), passing `-i <input>` and `-o <output>`. Choose the output extension (`.usd`, `.usda`, `.usdc`, or `.usdz`).
+7. Treat the process exit code as the conversion result: `0` means the command succeeded, non-zero means failure. On success the tool prints `Successfully converted: <output>`; confirm the output file exists. A successful command does not prove that every requested source feature was preserved. Inspect the relevant geometry, hierarchy, materials, or constraints before claiming fidelity, and report the applicable limitations from Key Limitations (step 3) with the result.
+8. On failure, read stderr. The tool prints `Error: conversion failed with code <n>` followed by the converter error message.
+9. For option-discovery questions, run `usd-convert-cad --help` to read the documented options for the installed wheel version before recommending overrides.
+10. For mapping, BIM, unit, metadata, material, instancing, or Revit room/space questions, read [Concept Mapping](../../docs/concept_mapping.md) before answering.
 
 ## Output Format
 
@@ -152,7 +153,7 @@ Use the installed `usd-convert-cad` wheel. There is one supported converter core
 
 ## Concept Mapping
 
-Read `../../docs/concept_mapping.md` when a user asks how source CAD concepts become
+Read [Concept Mapping](../../docs/concept_mapping.md) when a user asks how source CAD concepts become
 OpenUSD. The document covers HOOPS product occurrences, part definitions,
 representation items, tessellation, materials, source metadata, hidden state,
 units, instancing, and composition arcs.
@@ -213,16 +214,19 @@ The wheel builds a converter `Parameters` object from the CLI flags and converts
 | `--no-normals` | Do not author normals. |
 | `--no-materials` | Do not author materials. |
 | `--material-type <none\|preview-surface\|preview-surface-omnipbr\|preview-surface-materialx>` | Material output type. MaterialX authors OpenPBR for the `mtlx` render context and includes a Preview Surface fallback. |
-| `--up-axis <file\|y\|z>` | Override output stage up-axis. |
+| `--up-axis <file\|y\|z>` | Override output stage up-axis metadata only; does not rotate geometry. |
 | `--instancing-style <none\|reference\|instanceable-reference>` | Instancing style for repeated components. |
 | `--composition-style <none\|reference\|payload>` | Composition style for external sub-assemblies and parts. |
 | `--filter-style <none\|omit\|hide\|deactivate>` | How hidden CAD elements are converted. |
 | `--load-hidden` | Load hidden CAD elements before filtering. |
 | `--global-xforms` | Author global transforms instead of local transforms. |
-| `--convert-curves` | Convert curve and wire geometry—both 3D and 2D (including DWG/DXF model-space linework)—to USD BasisCurves. See `LIMITATIONS.md` for 2D conversion limitations. |
+| `--convert-curves` | Convert curve and wire geometry—both 3D and 2D (including DWG/DXF model-space linework)—to USD BasisCurves. See [Limitations](../../LIMITATIONS.md) for 2D conversion limitations. |
 | `--convert-metadata` | Convert CAD metadata to USD custom attributes. |
+| `--no-texture-coordinates` | Disable source UVs and texture-image export; UV preservation defaults to enabled. |
+| `--prototype-all-parts` | Prototype every part instead of only repeated parts; ignored with instancing disabled. |
+| `--version` | Print installed package version. |
 | `--no-dedup` | Disable mesh and material deduplication. |
-| `--read-constraints` | Export CATIA V5, NX, and SolidWorks `Fix`, CATIA V5 `Fix Together`, NX `Bond`, and SolidWorks `Lock` mate as USD Physics fixed joints that preserve world or relative poses. |
+| `--read-constraints` | Export CATIA V5, NX, and SolidWorks `Fix`, CATIA V5 `Fix Together`, NX `Bond`, and SolidWorks `Lock` mate as USD Physics fixed joints that preserve world or relative poses, plus supported Contact rigid bodies and convex-hull collisions. Named constraint sets become Scope prims. |
 | `--convert-physics-data` | Author physical properties on USD prims. |
 | `--physics-accuracy-level <0.0-1.0>` | Physical property accuracy. |
 | `--physics-use-geometry-on-ribrep` | Use geometry instead of topology for RiBRep physical properties. |
@@ -230,13 +234,42 @@ The wheel builds a converter `Parameters` object from the CLI flags and converts
 | `--creator <value>` | Creator metadata to author on output USD layers. |
 | `--progress`, `--progress-frequency <hz>` | Print converter progress. |
 
+### Output Preservation
+
+Source UVs are preserved by default, including seams across welded vertices.
+Supported material images are written to `Textures/` beside the USD; keep that
+directory with the output. USDZ includes referenced images in the archive.
+`--no-texture-coordinates` disables source UVs and texture-image export.
+Prototypes default to repeated parts only; `--prototype-all-parts` includes
+unique parts unless instancing is disabled.
+
+`--read-constraints` preserves named/nested constraint sets as Scope prims,
+so fixed-joint paths can change. Supported Contact constraints export rigid
+bodies and mesh collisions. Check the Key Limitations below before claiming
+material or physics fidelity.
+
 ## Implementation Contract
 
 Conversion passes only when the converter returns `error_code == 0` and the expected USD output exists. The CLI maps this to process exit code `0` for success and non-zero for failure.
 
 ## Limitations
 
-Before promising conversion success or diagnosing failures, read `../../LIMITATIONS.md` for package limitations and upstream HOOPS Core known issues.
+### Key Limitations
+
+Check these against the input format and requested result before converting or promising that a feature will be preserved, and report any that apply with the conversion result. Do not claim success beyond them.
+
+| Applies to | Limitation |
+|---|---|
+| `.dwg`, `.dxf`, `.rvt`, `.rfa` on `linux-aarch64` | Not supported; conversion fails with `A3D_LOAD_INVALID_FILE_FORMAT` (`-10005`) and produces no output. |
+| Revit `.rvt`, `.rfa` | Source files of 2 GB or larger can fail to load. Nested families can be flattened into one component. Pipe catalog elements (pipes, elbows, tees) can look faceted; a post-conversion workaround is in [Limitations](../../LIMITATIONS.md). Revit Rooms and Spaces (spatial elements) are not converted to USD prims because the HOOPS Exchange Revit reader does not expose them; if the user needs them, point them to [usd-exporter-revit](https://github.com/NVIDIA-Omniverse/usd-exporter-revit), which runs inside Revit and exports Rooms and Spaces. |
+| Texture images | Require materials and source UVs. Keep `Textures/` with USD. Textures use `st`, repeat wrapping, and no texture transform. Other UV selections/factors and layered maps are limited. Standalone opacity/occlusion, height bump, specular/glossiness, clearcoat, and environment maps are unsupported. `BLEND` image alpha and `MASK` with non-unit scalar opacity are skipped. Inspect textures before claiming fidelity; see [details](../../LIMITATIONS.md#source-uvs-and-material-textures). |
+| Materials, any format except glTF | Basic colors and material assignments may be preserved, but not the full source PBR material model. Only `.gltf` and `.glb` preserve PBR properties. |
+| `.prt`, `.asm` | The CAD system (NX or Creo, Creo or Solid Edge) depends on the file content, so interpretation can vary. |
+| `.dwg`, `.dxf` 2D content | Needs `--convert-curves` for linework. Paper-space layouts are not converted, and text, dimensions, and annotations are not preserved as text. |
+| Assembly constraints | Only exported with `--read-constraints`. Supported fixed mappings include CATIA V5, NX, and SolidWorks `Fix`, CATIA V5 `Fix Together`, NX `Bond`, and SolidWorks `Lock`, exported as USD Physics fixed joints; supported Contact constraints additionally export rigid-body and convex-hull collision APIs, which can fill openings/concavities and create artificial overlaps. Contact export can disable instancing. Other types and unresolved targets are dropped. |
+| USDZ output | Requires monolithic conversion (`--composition-style none`); OmniPBR materials are switched to Preview Surface. |
+
+[Limitations](../../LIMITATIONS.md) is the full reference for restrictions, workarounds, and upstream known issues. Consult it for details and when diagnosing conversion failures.
 
 ## Troubleshooting
 
@@ -250,8 +283,8 @@ Report a blocked conversion when:
 
 ## References
 
-- `docs/concept_mapping.md` for HOOPS Exchange to OpenUSD concept mapping.
-- `LIMITATIONS.md` for detailed known limitations and upstream known-issues reference.
-- `README.md` for repository overview and user-facing setup notes.
-- `CONTRIBUTING.md` for maintainer expectations and supported-format update policy.
+- [Concept Mapping](../../docs/concept_mapping.md) for HOOPS Exchange to OpenUSD concept mapping.
+- [Limitations](../../LIMITATIONS.md) for detailed known limitations and upstream known-issues reference.
+- [README](../../README.md) for repository overview and user-facing setup notes.
+- [Contributing](../../CONTRIBUTING.md) for maintainer expectations and supported-format update policy.
 - `usd-convert-cad --help` for the authoritative converter option list of the installed wheel.

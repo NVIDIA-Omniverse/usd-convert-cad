@@ -20,8 +20,8 @@ between releases.
 
 | Component | Version | License | Copyright / Notes |
 | --- | --- | --- | --- |
-| [HOOPS Exchange SDK](https://www.techsoft3d.com/products/hoops/exchange/) | 2026.7.0 | Commercial / Proprietary; licensed by NVIDIA from Tech Soft 3D | Core CAD import engine. The applicable SDK open-source and other third-party acknowledgements are reproduced below. |
-| [NVIDIA OpenUSD Exchange SDK](https://github.com/NVIDIA-Omniverse/usd-exchange) | 3.0 | [Apache-2.0](https://github.com/NVIDIA-Omniverse/usd-exchange/blob/main/LICENSE.md) | Open-source OpenUSD authoring layer. |
+| [HOOPS Exchange SDK](https://www.techsoft3d.com/products/hoops/exchange/) | 2026.8.0 | Commercial / Proprietary; licensed by NVIDIA from Tech Soft 3D | Core CAD import engine. The applicable SDK open-source and other third-party acknowledgements are reproduced below. |
+| [NVIDIA OpenUSD Exchange SDK](https://github.com/NVIDIA-Omniverse/usd-exchange) | 3.0.1 | [Apache-2.0](https://github.com/NVIDIA-Omniverse/usd-exchange/blob/main/LICENSE.md) | Open-source OpenUSD authoring layer. |
 | [OpenUSD (pxr)](https://openusd.org/) | 25.11 | [Tomorrow Open Source Technology License 1.0](https://github.com/PixarAnimationStudios/OpenUSD/blob/v25.11/LICENSE.txt) | Redistributed in the Python wheel (`pxr` runtime) and linked by the native library. Provided via the OpenUSD Exchange SDK. |
 | [fmt](https://github.com/fmtlib/fmt) | bundled with USD Exchange | MIT (with binary-redistribution exception) | License text is reproduced below. |
 | [pybind11](https://github.com/pybind/pybind11) | bundled with USD Exchange | BSD-3-Clause | Python bindings; license text is reproduced below. |
@@ -118,7 +118,7 @@ distribution that HOOPS Exchange embeds.
 
 ## NVIDIA Omniverse CAD Converter dependencies
 
-### HOOPS Exchange SDK 2026.7.0 — Proprietary acknowledgment
+### HOOPS Exchange SDK 2026.8.0 — Proprietary acknowledgment
 
 The Omniverse CAD Converter uses components of the proprietary Tech Soft 3D
 HOOPS Exchange SDK under NVIDIA's commercial license from Tech Soft 3D. HOOPS
@@ -127,7 +127,7 @@ Tech Soft 3D publishes the current open-source and other third-party
 acknowledgments for HOOPS Exchange at
 <https://docs.techsoft3d.com/hoops/exchange/start/acknowledgments.html>.
 
-### NVIDIA OpenUSD Exchange SDK 3.0
+### NVIDIA OpenUSD Exchange SDK 3.0.1
 
 The OpenUSD Exchange SDK is open-source software licensed under the
 [Apache License 2.0](https://github.com/NVIDIA-Omniverse/usd-exchange/blob/main/LICENSE.md).
@@ -220,6 +220,7 @@ Each license text is reproduced from the project's release at the version shippe
 | --- | --- | --- | --- |
 | [alembic](https://github.com/alembic/alembic) | 1.8.5 | BSD-3-Clause | `Alembic.dll` |
 | [Boost](https://www.boost.org/) | 1.82.0 | BSL-1.0 | `usd_boost.dll` |
+| [Bzip2](https://sourceware.org/bzip2/) | 1.0.8 | [Bzip2 license](https://github.com/libarchive/bzip2/blob/bzip2-1.0.8/LICENSE) | Embedded in the CPython runtime in Linux wheels (`libpython3.12.so*`) |
 | [CPython](https://www.python.org/) | 3.12.12 | PSF-2.0 | `usd_python.dll` |
 | [Imath](https://github.com/AcademySoftwareFoundation/Imath) | 3.1.12 | BSD-3-Clause | `Imath-3_1.dll` |
 | [libffi](https://github.com/libffi/libffi) | 3.4.4 | MIT | linked by CPython |
@@ -353,6 +354,56 @@ SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
 FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+```
+
+### Bzip2 1.0.8
+
+Bundled with CPython to support its standard-library `bz2` module.
+
+Source: [Bzip2 1.0.8 LICENSE](https://github.com/libarchive/bzip2/blob/bzip2-1.0.8/LICENSE).
+
+```text
+--------------------------------------------------------------------------
+
+This program, "bzip2", the associated library "libbzip2", and all
+documentation, are copyright (C) 1996-2019 Julian R Seward.  All
+rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. The origin of this software must not be misrepresented; you must
+   not claim that you wrote the original software.  If you use this
+   software in a product, an acknowledgment in the product
+   documentation would be appreciated but is not required.
+
+3. Altered source versions must be plainly marked as such, and must
+   not be misrepresented as being the original software.
+
+4. The name of the author may not be used to endorse or promote
+   products derived from this software without specific prior written
+   permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Julian Seward, jseward@acm.org
+bzip2/libbzip2 version 1.0.8 of 13 July 2019
+
+--------------------------------------------------------------------------
 ```
 
 ### CPython 3.12.12
